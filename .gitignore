@@ -1,0 +1,7 @@
+.qa-chrome-*/
+.qa-edge-*/
+.superpowers/
+qa-*.png
+tmp-*.png
+tmp/
+node_modules/

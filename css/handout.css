@@ -1,0 +1,56 @@
+:root {
+  --paper: #fffaf1;
+  --canvas: #eee6da;
+  --plum: #35253a;
+  --ink: #211d20;
+  --muted: #6c625f;
+  --gold: #c9952e;
+  --gold-pale: #f6e6b8;
+  --coral: #e86552;
+  --green: #547d68;
+  --line: #d9ccba;
+}
+
+* { box-sizing: border-box; }
+html { background: var(--canvas); }
+body { margin: 0; color: var(--ink); background: var(--canvas); font-family: "Microsoft YaHei", "PingFang SC", sans-serif; }
+.handout-actions { position: sticky; z-index: 10; top: 0; display: flex; justify-content: center; gap: 10px; padding: 10px; background: rgba(53,37,58,.96); box-shadow: 0 5px 18px rgba(53,37,58,.18); }
+.handout-actions a, .handout-actions button { min-height: 38px; padding: 8px 15px; border: 1px solid rgba(255,255,255,.26); border-radius: 5px; color: #fffaf1; background: transparent; font: 700 14px/1.2 inherit; text-decoration: none; cursor: pointer; }
+.handout-actions button { border-color: var(--coral); background: var(--coral); }
+#handoutPages { padding: 24px 0 56px; }
+.loading, .handout-error { width: min(210mm, calc(100% - 24px)); margin: 40px auto; padding: 24px; color: var(--plum); background: var(--paper); text-align: center; }
+.handout-page { position: relative; width: 210mm; min-height: 297mm; margin: 0 auto 24px; padding: 14mm 15mm 12mm; background-color: var(--paper); background-image: linear-gradient(rgba(91,78,89,.025) 1px, transparent 1px); background-size: 100% 7mm; box-shadow: 0 12px 32px rgba(53,37,58,.16); overflow: hidden; }
+.handout-page::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 5mm; background: var(--plum); }
+.page-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding-bottom: 7mm; border-bottom: 1px solid var(--gold); }
+.brand { margin: 0 0 2mm; color: var(--gold); font: 800 9px/1.2 Georgia, serif; letter-spacing: .15em; }
+.page-heading h1 { margin: 0; color: var(--plum); font: 800 25px/1.2 "STKaiti", "KaiTi", serif; letter-spacing: .04em; }
+.subtitle { margin: 2mm 0 0; color: var(--muted); font-size: 10px; }
+.page-index { flex: none; padding: 2mm 3mm; border: 1px solid var(--line); color: var(--plum); font: 800 10px/1 Georgia, serif; }
+.chapter-list { display: grid; gap: 5mm; padding-top: 6mm; }
+.chapter-card { break-inside: avoid; padding: 5mm 5.5mm 4.5mm; border: 1px solid var(--line); border-left: 2.5mm solid var(--plum); background: rgba(255,255,255,.58); box-shadow: 0 2mm 5mm rgba(53,37,58,.05); }
+.chapter-heading { display: flex; align-items: center; gap: 4mm; margin-bottom: 3mm; }
+.chapter-number { display: grid; flex: 0 0 11mm; width: 11mm; height: 11mm; place-items: center; border: 1px solid var(--gold); border-radius: 50%; color: var(--gold); font: 800 11px/1 Georgia, serif; }
+.chapter-identity h2 { margin: 0; color: var(--plum); font: 800 19px/1.2 "STKaiti", "KaiTi", serif; }
+.chapter-identity p { margin: 1mm 0 0; color: var(--gold); font-size: 9px; font-weight: 700; letter-spacing: .08em; }
+.chapter-detail { display: grid; grid-template-columns: 12mm 1fr; gap: 2mm; margin-top: 2.1mm; font-size: 10px; line-height: 1.55; }
+.detail-label { align-self: start; padding: .5mm 1mm; border-radius: 2px; color: var(--plum); background: var(--gold-pale); text-align: center; font-size: 9px; }
+.detail-copy { margin: 0; }
+.detail-copy li + li { margin-top: .7mm; }
+.methods ul { padding-left: 4.5mm; }
+.mistake .detail-label { color: #8d3327; background: #f8d9d2; }
+.example .detail-label { color: #315d49; background: #dce9e2; }
+.page-footer { position: absolute; right: 15mm; bottom: 7mm; left: 15mm; display: flex; justify-content: space-between; padding-top: 2mm; border-top: 1px solid var(--line); color: var(--muted); font-size: 8px; }
+
+@media (max-width: 850px) {
+  .handout-page { width: calc(100% - 20px); min-height: 0; padding: 24px 20px 54px 28px; }
+  .chapter-detail { grid-template-columns: 48px 1fr; }
+}
+
+@page { size: A4 portrait; margin: 0; }
+@media print {
+  html, body { background: #fff; }
+  .handout-actions { display: none !important; }
+  #handoutPages { padding: 0; }
+  .handout-page { width: 210mm; height: 297mm; min-height: 297mm; margin: 0; box-shadow: none; break-after: page; page-break-after: always; }
+  .handout-page:last-child { break-after: auto; page-break-after: auto; }
+}

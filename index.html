@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#35253a">
+<meta name="description" content="五年级数学解谜局：一对一家教互动工作台">
+<title>数学解谜局 · 案卷目录</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/math-mystery.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/mystery.css?v=13">
+</head>
+<body class="mystery-home">
+<header class="mystery-topbar">
+  <a class="mystery-brand" href="index.html" aria-label="数学解谜局首页">
+    <span class="mystery-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4.5h11.5A2.5 2.5 0 0 1 19 7v12.5H7.5A2.5 2.5 0 0 1 5 17V4.5Zm0 12.5a2.5 2.5 0 0 1 2.5-2.5H19M9 8h6M9 11h5"/></svg></span>
+    <span>数学解谜局</span>
+  </a>
+  <div class="mode-switch" role="group" aria-label="学习模式">
+    <button type="button" data-mode="director">
+      <span class="mystery-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 10h16M6 10 8 5l4 5 4-5 2 5M7 14h10l-1 5H8l-1-5Z"/></svg></span><span>导演模式</span>
+    </button>
+    <button type="button" data-mode="challenge">
+      <span class="mystery-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20c.6-4.1 2.8-6.2 6.5-6.2s5.9 2.1 6.5 6.2"/></svg></span><span>闯关模式</span>
+    </button>
+  </div>
+  <div class="top-actions">
+    <button type="button" id="homeFullscreen" class="icon-button" aria-label="全屏">
+      <span class="mystery-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/></svg></span><span>全屏</span>
+    </button>
+    <button type="button" id="homeSettings" class="icon-button" aria-label="设置">
+      <span class="mystery-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m19 13.5 1.3 1-.9 2.2-1.6-.2-1.3 1.3.2 1.6-2.2.9-1-1.3h-1.9l-1 1.3-2.2-.9.2-1.6-1.3-1.3-1.6.2-.9-2.2 1.3-1v-1.9l-1.3-1 .9-2.2 1.6.2 1.3-1.3-.2-1.6 2.2-.9 1 1.3h1.9l1-1.3 2.2.9-.2 1.6 1.3 1.3 1.6-.2.9 2.2-1.3 1v1.9Z"/></svg></span><span>设置</span>
+    </button>
+  </div>
+</header>
+
+<main class="home-workbench">
+  <aside class="home-file-cover">
+    <small>GRADE 5 · CASE BOOK</small>
+    <h1>九份<br>数学案卷</h1>
+    <p>每次只追一条线索。先猜，再动手，让证据说话。</p>
+    <div class="home-file-rule"></div>
+    <div class="home-note">
+      <span>提出谜题 → 收集线索</span>
+      <span>动手验证 → 锁定规律</span>
+      <span>独立破案 → 完成盖章</span>
+    </div>
+  </aside>
+
+  <section class="home-desk" aria-labelledby="caseDeskTitle">
+    <div class="home-desk-heading">
+      <div><small>MATH CASE ARCHIVE</small><h2 id="caseDeskTitle">选择今天要查的案卷</h2></div>
+      <div class="home-tools"><a href="handout.html">知识点讲义</a><a href="#wrongFiles">错因档案 <span class="wrong-badge"></span></a></div>
+    </div>
+    <article class="resume-card" id="resumeCard"></article>
+    <div class="home-case-grid" id="caseGrid" aria-label="九份数学案卷"></div>
+
+    <section class="wrong-files" id="wrongFiles" hidden>
+      <h2>错因档案</h2>
+      <p>回看提示 → 重做原题 → 完成一道变式，才算真正归档。</p>
+      <div id="wrongList"></div>
+      <button type="button" class="clear-wrong" id="btnClearWrong">清空错因档案</button>
+    </section>
+  </section>
+</main>
+
+<dialog class="mystery-settings-dialog" id="homeSettingsDialog">
+  <form method="dialog">
+    <div class="dialog-heading"><div><small>工作台设置</small><h2>保持专注，减少干扰</h2></div><button value="close" aria-label="关闭">×</button></div>
+    <label class="setting-row"><span><b>减少动画</b><small>关闭不必要的移动效果</small></span><input id="homeReduceMotion" type="checkbox"></label>
+    <button type="button" class="reset-case" id="btnResetAll">重置全部案卷进度</button>
+  </form>
+</dialog>
+
+<script src="js/app-core.js"></script>
+<script src="js/common.js"></script>
+<script src="js/home.js"></script>
+<script src="js/pwa.js"></script>
+</body>
+</html>

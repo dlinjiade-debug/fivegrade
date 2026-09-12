@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#35253a">
+<title>单元六 · 可能性｜随机疑云</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/math-mystery.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/mystery.css?v=13">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="section teach">
+    <h2>🎬 跟我学 · 谁的可能性大</h2>
+    <div id="demoBtns" style="margin-bottom:14px"></div>
+    <div class="demo-stage" id="demoStage">
+      <p style="color:#90a4ae">选一个实验，点「下一步」看结果一次一次出现</p>
+    </div>
+    <div class="step-controls">
+      <button class="btn green" id="btnPrev">← 上一步</button>
+      <button class="btn" id="btnNext">下一步 →</button>
+      <button class="btn orange" id="btnReset">重新演示</button>
+      <span class="step-indicator" id="stepIndicator"></span>
+    </div>
+  </div>
+
+  <div class="section why">
+    <h2>💡 方法揭秘 · 可能性的三条规律</h2>
+    <div class="why-card">
+      <b>🎲 数量多 → 可能性大。</b><br>
+      袋子里红球多白球少，摸到红球的可能性就<b>大</b>，摸到白球的可能性<b>小</b>；<br>
+      数量<b>一样多</b>，可能性就<b>一样大</b>。
+    </div>
+    <div class="why-card">
+      <b>⚖️ 可能性相等 = 公平。</b><br>
+      转盘上红色和蓝色<b>格数相同</b>，指针停在红色的可能性和蓝色一样大，游戏规则就<b>公平</b>。
+    </div>
+    <div class="why-card">
+      <b>🔒 一定 / 可能 / 不可能。</b><br>
+      全是红球 → 摸出红球<b>一定</b>；红白都有 → 摸出红球<b>可能</b>；一个红球都没有 → 摸出红球<b>不可能</b>。
+    </div>
+    <div class="why-card">
+      <b>⚠️ 易错辨析</b>
+      <div class="compare">
+        <div class="cmp-box wrongbox">
+          <h4>❌ 常见错误</h4>
+          "摸了 3 次都是红球，下一次一定是红球" —— 错！<br>
+          "可能性大就一定发生" —— 错！
+        </div>
+        <div class="cmp-box right">
+          <h4>✅ 正确说法</h4>
+          可能性<b>大</b>只是<b>机会多</b>，不等于一定；<br>
+          可能性<b>小</b>也有<b>可能发生</b>。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section practice">
+    <h2>✏️ 亲手练 · 一定 / 可能 / 不可能</h2>
+    <div class="score-strip"><span>第 <b id="pRound">1</b> / <span id="pTotal">8</span> 题</span></div>
+    <div class="q-text" id="pQuestion" style="text-align:center"></div>
+    <div id="pOptions" style="text-align:center"></div>
+    <div class="feedback" id="pFeedback" role="status" aria-live="polite" style="text-align:center"></div>
+    <div style="text-align:center"><button class="btn green" id="pNextQ" style="display:none">下一题 →</button></div>
+  </div>
+
+  <div class="section game">
+    <h2>🏆 闯关挑战 · 可能性小达人</h2>
+    <div class="score-strip">
+      <span>第 <b id="gRound">1</b> / <span id="gTotal">10</span> 关</span>
+      <span>答对 <b id="gScore">0</b> 题</span>
+      <span id="gStarHint">答对 8 题盖完成印章</span>
+    </div>
+    <div class="q-text" id="gQuestion" style="text-align:center"></div>
+    <div id="gOptions" style="text-align:center"></div>
+    <div class="feedback" id="gFeedback" role="status" aria-live="polite" style="text-align:center"></div>
+    <div style="text-align:center"><button class="btn green" id="gNext" style="display:none">下一关 →</button></div>
+    <div id="gFinal" style="display:none;font-size:22px;margin-top:10px;text-align:center"></div>
+  </div>
+
+</div>
+<script src="js/app-core.js"></script>
+<script src="js/common.js"></script>
+<script src="js/labs-arithmetic.js"></script>
+<script src="js/labs-geometry.js"></script>
+<script src="js/handwrite.js?v=13"></script>
+<script src="js/unit6.js"></script>
+<script src="js/pwa.js"></script>
+</body>
+</html>

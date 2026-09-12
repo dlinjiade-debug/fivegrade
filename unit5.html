@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#35253a">
+<title>单元五 · 简易方程｜天平密码</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/math-mystery.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/mystery.css?v=13">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="section teach">
+    <h2>🎬 跟我学 · 从字母到方程</h2>
+    <div id="demoBtns" style="margin-bottom:14px"></div>
+    <div class="demo-stage" id="demoStage">
+      <p style="color:#7d8b96">点「下一步」，看看字母是怎么「打败」无穷多道算式</p>
+    </div>
+    <div class="step-controls">
+      <button class="btn green" id="btnPrev">← 上一步</button>
+      <button class="btn" id="btnNext">下一步 →</button>
+      <button class="btn orange" id="btnReset">重新演示</button>
+      <span class="step-indicator" id="stepIndicator"></span>
+    </div>
+  </div>
+
+  <div class="section why">
+    <h2>💡 方法揭秘 · 字母的规则与方程</h2>
+    <div class="why-card">
+      <b>为什么要用字母表示数？</b><br>
+      因为它<b>一个式子顶一万句</b>！「爸爸比小红大 30 岁」，小红 1 岁、2 岁、100 岁……写不完。<br>
+      用 <b>a + 30</b> 一个式子，就把<b>所有情况</b>都说清楚了——这就是数学的简洁美。
+    </div>
+    <div class="why-card">
+      <b>什么是方程？怎么解方程？</b><br>
+      <b>含有未知数的等式</b>叫方程（如 <b>x + 3 = 9</b>）。<br>
+      解方程的依据是<b>等式的性质</b>：两边同时加减同一个数、或乘除同一个不为 0 的数，等式仍然成立——<br>
+      像玩天平一样，让左边只剩下 x，答案就出来了。解完别忘了<b>验算</b>！
+    </div>
+    <div class="why-card">
+      <b>乘号的简写规则（重要！）</b><br>
+      ① a × 3 写成 <b>3a</b>（数字写在字母前面，乘号省略或记作「·」）<br>
+      ② a × b 写成 <b>ab</b><br>
+      ③ 1 × a = <b>a</b>（1 个 a 就是 a，1 可以省略）<br>
+      ④ 加号、减号、除号<b>都不能省略</b>：a + 3、a − 3、a ÷ 3 必须老老实实写！
+    </div>
+    <div class="why-card">
+      <b>⚠️ 易错辨析</b>
+      <div class="compare">
+        <div class="cmp-box wrongbox">
+          <h4>❌ 混淆</h4>
+          a + a = a² ？<br>
+          a × a = 2a ？<br>
+          全错！加法和乘法是两回事。
+        </div>
+        <div class="cmp-box right">
+          <h4>✅ 正确</h4>
+          a + a = <b>2a</b>（2 个 a 相加）<br>
+          a × a = <b>a²</b>（a 乘 a，五年级了解即可）<br>
+          想清楚「几个 a 相加」还是「a 乘 a」。
+        </div>
+      </div>
+    </div>
+    <div class="why-card">
+      <b>📐 常用公式（用字母写，又短又好记）</b><br>
+      ① 正方形：<b>周长 C = 4a</b>，<b>面积 S = a²</b><br>
+      ② 长方形：周长 <b>C = 2(a + b)</b>，面积 <b>S = ab</b>（a 是长，b 是宽）<br>
+      ③ 路程：<b>s = vt</b>（速度 × 时间）；总价：<b>总价 = 单价 × 数量</b><br>
+      代入求值时：<b>先把字母换成数，再按「先乘除后加减」算</b>。
+    </div>
+    <div class="why-card">
+      <b>🧮 合并同类项（带 a 的和带 a 的合并）</b><br>
+      3a + 2a = <b>5a</b>（3 个 a 加 2 个 a）　8b − 3b = <b>5b</b>　4x − x = <b>3x</b>（x 就是 1x）<br>
+      <b style="color:#d9483f">两个"不能"：</b>不同字母不能合并（3a + 4b 就到此为止）；<br>
+      字母和数字不能直接合并（5a + 2 不能写成 7a 也不能写成 7）。
+    </div>
+    <div class="why-card">
+      <b>⚠️ 易错辨析：a² 和 2a 是两回事！</b>
+      <div class="compare">
+        <div class="cmp-box wrongbox">
+          <h4>❌ 混淆</h4>
+          a² = 2a ？<br>
+          当 a = 5 时，a² = 10 ？<br>
+          全错！
+        </div>
+        <div class="cmp-box right">
+          <h4>✅ 正确</h4>
+          a² = <b>a × a</b>（自己乘自己）<br>
+          2a = <b>a + a</b>（2 个 a 相加）<br>
+          当 a = 5：a² = 25，2a = 10。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section practice">
+    <h2>✏️ 亲手练 · 把数代进去</h2>
+    <div class="score-strip"><span>第 <b id="pRound">1</b> / <span id="pTotal">18</span> 题</span></div>
+    <div class="q-text" id="pQuestion" style="text-align:center"></div>
+    <div id="pOptions" style="text-align:center"></div>
+    <div class="feedback" id="pFeedback" role="status" aria-live="polite" style="text-align:center"></div>
+    <div style="text-align:center"><button class="btn green" id="pNextQ" style="display:none">下一题 →</button></div>
+  </div>
+
+  <div class="section game">
+    <h2>🏆 闯关挑战 · 字母魔术师</h2>
+    <div class="score-strip">
+      <span>第 <b id="gRound">1</b> / <span id="gTotal">18</span> 关</span><span>答对 <b id="gScore">0</b> 题</span>
+      <span id="gStarHint">答对 14 题盖完成印章</span>
+    </div>
+    <div class="q-text" id="gQuestion" style="text-align:center"></div>
+    <div id="gOptions" style="text-align:center"></div>
+    <div class="feedback" id="gFeedback" role="status" aria-live="polite" style="text-align:center"></div>
+    <div style="text-align:center"><button class="btn green" id="gNext" style="display:none">下一关 →</button></div>
+    <div id="gFinal" style="display:none;font-size:22px;margin-top:10px;text-align:center"></div>
+  </div>
+
+</div>
+<script src="js/app-core.js"></script>
+<script src="js/common.js"></script>
+<script src="js/labs-arithmetic.js"></script>
+<script src="js/labs-geometry.js"></script>
+<script src="js/handwrite.js?v=13"></script>
+<script src="js/unit5.js"></script>
+<script src="js/pwa.js"></script>
+</body>
+</html>

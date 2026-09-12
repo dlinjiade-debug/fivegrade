@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#35253a">
+<title>单元二 · 小数乘法｜小数点追踪</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/math-mystery.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/mystery.css?v=13">
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 跟我学 -->
+  <div class="section teach">
+    <h2>🎬 跟我学 · 竖式分步演示</h2>
+    <div id="exampleBtns" style="margin-bottom:14px"></div>
+    <div class="demo-stage" id="demoStage">
+      <p style="color:#7d8b96">选择一个例题，然后点「下一步」开始演示</p>
+    </div>
+    <div class="step-controls">
+      <button class="btn green" id="btnPrev">← 上一步</button>
+      <button class="btn" id="btnNext">下一步 →</button>
+      <button class="btn orange" id="btnReset">重新演示</button>
+      <span class="step-indicator" id="stepIndicator"></span>
+    </div>
+  </div>
+
+  <!-- 算理揭秘 -->
+  <div class="section why">
+    <h2>💡 算理揭秘 · 为什么？</h2>
+
+    <div class="why-card">
+      <b>为什么积的小数位数 = 因数小数位数之和？</b><br>
+      用分数想一想：0.3 = 3/10，0.2 = 2/10。<br>
+      0.3 × 0.2 = (3×2) / (10×10) = 6/100 = <b>0.06</b><br>
+      分母 10×10 = 100 → 两位小数！「乘 10 缩小回来」就这么自然。
+    </div>
+
+    <div class="why-card" style="text-align:center">
+      <b>面积图：0.3 × 0.2 落在哪里？</b>
+      <div id="areaModel"></div>
+      <div style="color:#7d8b96;font-size:17px">整块大正方形是 1。绿色竖条宽 0.3，粉色横条高 0.2，
+        <b style="color:#2f7d5f">重叠的 6 小格</b>就是 0.3×0.2=0.06（占 100 格中的 6 格）。</div>
+    </div>
+
+    <div class="why-card">
+      <b>⚠️ 易错辨析：小数点点错位置</b>
+      <div class="compare">
+        <div class="cmp-box wrongbox">
+          <h4>❌ 错误做法</h4>
+          2.35 × 1.5 = 35.25<br>
+          「对齐因数的小数点点」——错！积的小数点<b>不是</b>照着因数对齐的。
+        </div>
+        <div class="cmp-box right">
+          <h4>✅ 正确做法</h4>
+          2.35 × 1.5 = <b>3.525</b><br>
+          先按整数乘出 3525，再<b>数一数</b>：因数共 2+1=3 位小数 → 积点 3 位小数点。
+        </div>
+      </div>
+    </div>
+
+    <div class="why-card">
+      <b>🔍 规律：积和因数比大小</b><br>
+      一个数（0 除外）乘<b>比 1 大</b>的数 → 积<b style="color:#d9483f">变大</b>：3.5 × 1.2 &gt; 3.5<br>
+      一个数（0 除外）乘<b>比 1 小</b>的数 → 积<b style="color:#2f6fb0">变小</b>：3.5 × 0.98 &lt; 3.5<br>
+      一个数乘 <b>1</b> → 积不变：3.5 × 1 = 3.5<br>
+      <span style="color:#7d8b96">用处：不用动笔就能检查答案！比如 2.4 × 0.3 算出来是 72，一看比 2.4 还大——肯定错了！</span>
+    </div>
+
+    <div class="why-card">
+      <b>⚠️ 易错辨析：积末尾的 0 要化简</b><br>
+      0.25 × 0.4 = 0.100 → 根据小数的性质化简为 <b>0.1</b>。<br>
+      记住口诀：<b>先点小数点，再去末尾 0</b>（顺序不能反！）。
+    </div>
+  </div>
+
+  <!-- 亲手练 -->
+  <div class="section practice">
+    <h2>✏️ 亲手练 · 给积点上小数点</h2>
+    <div class="score-strip"><span>第 <b id="pRound">1</b> / <span id="pTotal">8</span> 题</span><span id="pScore"></span></div>
+    <div class="q-text" id="pQuestion"></div>
+    <div style="background:#fff;border:2px solid #dfe6ea;border-radius:12px;padding:18px;text-align:center">
+      <div style="font-size:20px;color:#7d8b96;margin-bottom:10px">按整数乘出的积是：<span id="pIntProduct" style="font-weight:bold"></span></div>
+      <div style="font-size:16px;color:#7d8b96;margin-bottom:12px">因数一共有 <b id="pDecTotal"></b> 位小数 —— 请点击两个数字<b style="color:#d9483f">之间</b>的小圆点，放上小数点！</div>
+      <div id="pDigitRow" style="font-size:44px;font-weight:bold;letter-spacing:2px"></div>
+      <div class="feedback" id="pFeedback" role="status" aria-live="polite"></div>
+      <button class="btn green" id="pNextQ" style="display:none">下一题 →</button>
+    </div>
+  </div>
+
+  <!-- 闯关挑战 -->
+  <div class="section game">
+    <h2>🏆 闯关挑战 · 小数点搬运工</h2>
+    <div class="score-strip">
+      <span>第 <b id="gRound">1</b> / <span id="gTotal">12</span> 关</span><span>答对 <b id="gScore">0</b> 题</span>
+      <span id="gStarHint">答对 9 题盖完成印章</span>
+    </div>
+    <div class="q-text" id="gQuestion"></div>
+    <div id="gOptions"></div>
+    <div class="feedback" id="gFeedback" role="status" aria-live="polite"></div>
+    <button class="btn green" id="gNext" style="display:none">下一关 →</button>
+    <div id="gFinal" style="display:none;font-size:22px;margin-top:10px"></div>
+  </div>
+
+</div>
+<script src="js/app-core.js"></script>
+<script src="js/common.js"></script>
+<script src="js/labs-arithmetic.js"></script>
+<script src="js/labs-geometry.js"></script>
+<script src="js/vertical-calc.js?v=13"></script>
+<script src="js/handwrite.js?v=13"></script>
+<script src="js/unit2.js"></script>
+<script src="js/pwa.js"></script>
+</body>
+</html>

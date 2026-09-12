@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#35253a">
+<title>单元八 · 数学广角·植树问题｜间隔谜案</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/math-mystery.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/mystery.css?v=13">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="section teach">
+    <h2>🎬 跟我学 · 棵数和间隔的关系</h2>
+    <div id="demoBtns" style="margin-bottom:14px"></div>
+    <div class="demo-stage" id="demoStage">
+      <p style="color:#90a4ae">选一种情况，点「下一步」看树一棵一棵栽下去</p>
+    </div>
+    <div class="step-controls">
+      <button class="btn green" id="btnPrev">← 上一步</button>
+      <button class="btn" id="btnNext">下一步 →</button>
+      <button class="btn orange" id="btnReset">重新演示</button>
+      <span class="step-indicator" id="stepIndicator"></span>
+    </div>
+  </div>
+
+  <div class="section why">
+    <h2>💡 方法揭秘 · 先数间隔，再定棵数</h2>
+    <div class="why-card">
+      <b>🔑 万能第一步：先算间隔数。</b><br>
+      <b>间隔数 = 总长 ÷ 每个间隔的长度</b>。算出间隔数，再看两端的情况决定棵数。
+    </div>
+    <div class="why-card">
+      <b>🌳 三种情况（不封闭的直路）</b>
+      <div class="compare">
+        <div class="cmp-box right">
+          <h4>✅ 两端都栽</h4>
+          棵数 = 间隔数 <b>+ 1</b><br>
+          <span style="color:#607d8b">（开头一棵、结尾一棵）</span>
+        </div>
+        <div class="cmp-box right">
+          <h4>✅ 只栽一端</h4>
+          棵数 = 间隔数<br>
+          <span style="color:#607d8b">（一端有房子/河）</span>
+        </div>
+        <div class="cmp-box right">
+          <h4>✅ 两端都不栽</h4>
+          棵数 = 间隔数 <b>− 1</b><br>
+          <span style="color:#607d8b">（两端都是房子）</span>
+        </div>
+      </div>
+    </div>
+    <div class="why-card">
+      <b>⭕ 封闭图形（圆、正方形一圈）</b><br>
+      棵数 = 间隔数。因为首尾相接，<b>没有端点</b>，间隔和树一一对应。
+    </div>
+    <div class="why-card">
+      <b>🧠 化繁为简：从小的数想起。</b><br>
+      100 米不会算？先想 <b>20 米每 5 米栽一棵</b>：间隔 4 个，棵数 5 —— 一下子就明白了！
+    </div>
+    <div class="why-card">
+      <b>⚠️ 易错辨析</b>
+      <div class="compare">
+        <div class="cmp-box wrongbox">
+          <h4>❌ 常见错误</h4>
+          一律用「总长 ÷ 间隔」当棵数；<br>
+          锯木头、走楼梯也算成 +1。
+        </div>
+        <div class="cmp-box right">
+          <h4>✅ 正确做法</h4>
+          先画<b>简单的图</b>（比如 3 个间隔），数一数再总结；<br>
+          锯木头、爬楼梯是「两端都不栽」：次数 = 段数 − 1。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section practice">
+    <h2>✏️ 亲手练 · 数一数</h2>
+    <div class="score-strip"><span>第 <b id="pRound">1</b> / <span id="pTotal">6</span> 题</span></div>
+    <div class="q-text" id="pQuestion" style="text-align:center"></div>
+    <div id="pOptions" style="text-align:center"></div>
+    <div class="feedback" id="pFeedback" role="status" aria-live="polite" style="text-align:center"></div>
+    <div style="text-align:center"><button class="btn green" id="pNextQ" style="display:none">下一题 →</button></div>
+  </div>
+
+  <div class="section game">
+    <h2>🏆 闯关挑战 · 植树小能手</h2>
+    <div class="score-strip">
+      <span>第 <b id="gRound">1</b> / <span id="gTotal">8</span> 关</span>
+      <span>答对 <b id="gScore">0</b> 题</span>
+      <span id="gStarHint">答对 6 题盖完成印章</span>
+    </div>
+    <div class="q-text" id="gQuestion" style="text-align:center"></div>
+    <div id="gOptions" style="text-align:center"></div>
+    <div class="feedback" id="gFeedback" role="status" aria-live="polite" style="text-align:center"></div>
+    <div style="text-align:center"><button class="btn green" id="gNext" style="display:none">下一关 →</button></div>
+    <div id="gFinal" style="display:none;font-size:22px;margin-top:10px;text-align:center"></div>
+  </div>
+
+</div>
+<script src="js/app-core.js"></script>
+<script src="js/common.js"></script>
+<script src="js/labs-arithmetic.js"></script>
+<script src="js/labs-geometry.js"></script>
+<script src="js/handwrite.js?v=13"></script>
+<script src="js/unit8.js"></script>
+<script src="js/pwa.js"></script>
+</body>
+</html>

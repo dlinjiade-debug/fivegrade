@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#35253a">
+<title>单元一 · 观察简单组合体｜空间证物室</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/math-mystery.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/style.css">
+<style>
+.v3d-toolbar { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 10px 0; }
+.v3d-btn {
+  font-family: inherit; font-size: 17px; padding: 8px 18px;
+  border: 2px solid var(--blue); border-radius: 20px; background: #fff;
+  color: var(--blue-dark); cursor: pointer; transition: all 0.15s;
+}
+.v3d-btn:hover { background: var(--hl-blue); }
+.v3d-btn.on { background: var(--blue); color: #fff; }
+.v3d-stage { text-align: center; }
+.v3d-stage canvas {
+  background: linear-gradient(#fbfcfd, #eef4f7);
+  border: 2px solid #dfe6ea; border-radius: 16px;
+  max-width: 100%; cursor: grab; display: inline-block;
+}
+.v3d-stage canvas:active { cursor: grabbing; }
+.v3d-hint { color: #7d8b96; font-size: 15px; margin-top: 4px; }
+.explode-row { display: flex; align-items: center; gap: 10px; justify-content: center; font-size: 17px; color: var(--muted); margin-top: 6px; }
+.explode-row input[type=range] { width: 200px; accent-color: var(--green); }
+.dir-badge {
+  display: inline-block; background: var(--blue); color: #fff; border-radius: 20px;
+  padding: 4px 18px; font-size: 18px; font-weight: bold; margin-bottom: 8px;
+}
+</style>
+<link rel="stylesheet" href="css/mystery.css?v=13">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="section teach">
+    <h2>🔍 3D 观察台 · 想怎么看就怎么看</h2>
+    <div id="obsBtns" class="v3d-toolbar" style="margin-bottom:6px"></div>
+    <div class="v3d-stage">
+      <canvas id="obsCanvas" width="560" height="400"></canvas>
+      <div class="v3d-hint">🖱️ 按住拖动 = 转动它 · 滚轮 = 放大缩小 · 被挡住的方向就转过去看！</div>
+      <div class="explode-row">
+        <span>🧨 爆炸分解：</span>
+        <input type="range" id="explodeSlider" min="0" max="100" value="0">
+        <label style="cursor:pointer"><input type="checkbox" id="xrayToggle"> 👓 透视眼（看不见的方块变红）</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="section teach">
+    <h2>🎬 跟我学 · 三个方向看一看</h2>
+    <div id="demoBtns" style="margin-bottom:14px"></div>
+    <div class="demo-stage" id="demoStage">
+      <p style="color:#7d8b96">选择一个组合体，点「下一步」，3D 模型会自己转向，带你逐个方向观察</p>
+    </div>
+    <div class="step-controls">
+      <button class="btn green" id="btnPrev">← 上一步</button>
+      <button class="btn" id="btnNext">下一步 →</button>
+      <button class="btn orange" id="btnReset">重新演示</button>
+      <span class="step-indicator" id="stepIndicator"></span>
+    </div>
+  </div>
+
+  <div class="section why">
+    <h2>💡 方法揭秘 · 怎么看又快又准？</h2>
+    <div class="why-card">
+      <b>口诀：正面、左面逐格投影，上面看占地形状。</b><br>
+      ① <b>正面</b>：从前往后看，同一位置前后重合只画一格；方格仍要放在原来的高度，遇到桥洞不能把空位补成方格。<br>
+      ② <b>上面</b>：从上往下看，就是它的<b>占地面积</b>（俯视形状），不管高度。<br>
+      ③ <b>左面</b>：从左往右看，和正面一样是「列 + 层」，只是方向换了。
+    </div>
+    <div class="why-card">
+      <b>⚠️ 易错辨析：看不见 ≠ 没有</b>
+      <div class="compare">
+        <div class="cmp-box wrongbox">
+          <h4>❌ 常见错误</h4>
+          数小正方体时只数<b>看得见</b>的，把后面、下面被挡住的漏掉了。
+        </div>
+        <div class="cmp-box right">
+          <h4>✅ 正确做法</h4>
+          先按高度逐层核对三个视图，再推想被遮住的位置；不要只凭最高层把整列补满。
+          不确定时，去观察台开「透视眼」或「爆炸分解」验证。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section practice">
+    <h2>✏️ 亲手练 · 选出正确的视图</h2>
+    <div class="score-strip"><span>第 <b id="pRound">1</b> / 5 题</span><span id="pDir" style="color:#2f6fb0;font-weight:bold"></span></div>
+    <div style="text-align:center;margin-bottom:8px;color:#7d8b96">观察左边的 3D 组合体（可以拖动旋转！），选出它<b id="pDirQ">从正面看</b>的视图：</div>
+    <div style="display:flex;justify-content:center;align-items:flex-start;gap:30px;flex-wrap:wrap">
+      <div style="text-align:center">
+        <canvas id="pCanvas" width="360" height="280" style="background:linear-gradient(#fbfcfd,#eef4f7);border:2px solid #dfe6ea;border-radius:14px;cursor:grab"></canvas>
+        <div style="margin-top:6px"><button class="v3d-btn" id="pHint">💡 提示：帮我转到对应方向</button></div>
+      </div>
+      <div id="pOptions" style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;max-width:420px"></div>
+    </div>
+    <div class="feedback" id="pFeedback" role="status" aria-live="polite" style="text-align:center"></div>
+    <div style="text-align:center"><button class="btn green" id="pNextQ" style="display:none">下一题 →</button></div>
+  </div>
+
+  <div class="section game">
+    <h2>🏆 闯关挑战 · 小侦探数方块</h2>
+    <div class="score-strip">
+      <span>第 <b id="gRound">1</b> / 5 关</span><span>答对 <b id="gScore">0</b> 题</span>
+      <span>全对盖完成印章</span>
+    </div>
+    <div class="q-text" id="gQuestion" style="text-align:center"></div>
+    <div style="text-align:center">
+      <canvas id="gCanvas" width="400" height="300" style="background:linear-gradient(#fbfcfd,#eef4f7);border:2px solid #dfe6ea;border-radius:14px;cursor:grab"></canvas>
+      <div style="margin-top:6px"><button class="v3d-btn" id="gXray">👓 使用透视眼（诚实小侦探不靠它哦）</button></div>
+    </div>
+    <div id="gOptions" style="text-align:center;margin-top:12px"></div>
+    <div class="feedback" id="gFeedback" role="status" aria-live="polite" style="text-align:center"></div>
+    <div style="text-align:center"><button class="btn green" id="gNext" style="display:none">下一关 →</button></div>
+    <div id="gFinal" style="display:none;font-size:22px;margin-top:10px;text-align:center"></div>
+  </div>
+
+</div>
+<script src="js/app-core.js"></script>
+<script src="js/common.js"></script>
+<script src="js/labs-arithmetic.js"></script>
+<script src="js/labs-geometry.js"></script>
+<script src="js/handwrite.js?v=13"></script>
+<script src="js/voxel3d.js"></script>
+<script src="js/unit1.js"></script>
+<script src="js/pwa.js"></script>
+</body>
+</html>

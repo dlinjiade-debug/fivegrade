@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#35253a">
+<title>单元三 · 小数除法｜除法迷雾</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/math-mystery.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/mystery.css?v=13">
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 跟我学 -->
+  <div class="section teach">
+    <h2>🎬 跟我学 · 竖式分步演示</h2>
+    <div id="exampleBtns" style="margin-bottom:14px"></div>
+    <div class="demo-stage" id="demoStage">
+      <p style="color:#7d8b96">选择一个例题，然后点「下一步」开始演示</p>
+    </div>
+    <div class="step-controls">
+      <button class="btn green" id="btnPrev">← 上一步</button>
+      <button class="btn" id="btnNext">下一步 →</button>
+      <button class="btn orange" id="btnReset">重新演示</button>
+      <span class="step-indicator" id="stepIndicator"></span>
+    </div>
+  </div>
+
+  <!-- 算理揭秘 -->
+  <div class="section why">
+    <h2>💡 算理揭秘 · 为什么？</h2>
+
+    <div class="why-card">
+      <b>为什么除数是小数要先转化？</b><br>
+      因为除数是整数我们才会算呀！转化的依据是<b>商不变的性质</b>：<br>
+      被除数和除数<b>同时乘 10、100……</b>（小数点同时右移），商不变。<br>
+      比如 7.65 ÷ 0.85 → 同时 ×100 → 765 ÷ 85，商还是 9。
+    </div>
+
+    <div class="why-card">
+      <b>为什么商的小数点要和被除数的小数点对齐？</b><br>
+      因为是<b>按顺序一位一位除</b>的：除到被除数的十分位，商就写在十分位上。<br>
+      商的小数点一错位，数的大小就全变了：5.6 ≠ 56 ≠ 0.56！
+    </div>
+
+    <div class="why-card">
+      <b>为什么余数后面可以添 0 继续除？</b><br>
+      根据<b>小数的性质</b>，小数末尾添 0 大小不变。<br>
+      3.8 = 3.80 = 3.800。余 3 个十分之一，就是 30 个百分之一、300 个千分之一，当然可以继续分！
+    </div>
+
+    <div class="why-card">
+      <b>⚠️ 易错辨析：只移了除数，忘了被除数</b>
+      <div class="compare">
+        <div class="cmp-box wrongbox">
+          <h4>❌ 错误做法</h4>
+          7.65 ÷ 0.85 → 只把 0.85 变成 85，被除数还是 7.65<br>
+          7.65 ÷ 85 算出一个奇怪的小数 —— 商变了，全错！
+        </div>
+        <div class="cmp-box right">
+          <h4>✅ 正确做法</h4>
+          要移<b>一起移</b>：0.85 → 85，7.65 → 765。<br>
+          口诀：<b>「你移几位，我也移几位」</b>，商不变。
+        </div>
+      </div>
+    </div>
+
+    <div class="why-card">
+      <b>🔍 规律：商和被除数比大小</b><br>
+      除数 <b>&gt; 1</b> → 商<b style="color:#2f6fb0">变小</b>：22.4 ÷ 4 = 5.6 &lt; 22.4<br>
+      除数 <b>&lt; 1</b>（0除外）→ 商<b style="color:#d9483f">变大</b>：7.5 ÷ 0.25 = 30 &gt; 7.5<br>
+      除数 <b>= 1</b> → 商不变。<br>
+      <span style="color:#7d8b96">记忆：除以一个比 1 小的数，等于把它「拆得更碎」，份数当然更多！</span>
+    </div>
+
+    <div class="why-card">
+      <b>⚠️ 易错辨析：转化时被除数「点不出」怎么办</b><br>
+      12.6 ÷ 0.28：0.28 右移 2 位变 28，12.6 也要右移 2 位——<br>
+      12.6 → 126.0 → <b>1260</b>！小数点移动时末尾不够就补 0。<br>
+      <span style="color:#7d8b96">验证：小数点右移 2 位就是 ×100，12.6 × 100 = 1260 ✓</span>
+    </div>
+  </div>
+
+  <!-- 亲手练 -->
+  <div class="section practice">
+    <h2>✏️ 亲手练 · 小数点搬家（转化练习）</h2>
+    <div class="score-strip"><span>第 <b id="pRound">1</b> / <span id="pTotal">8</span> 题</span><span id="pScore"></span></div>
+    <div class="q-text" id="pQuestion"></div>
+    <div style="background:#fff;border:2px solid #dfe6ea;border-radius:12px;padding:18px;text-align:center">
+      <div style="font-size:16px;color:#7d8b96;margin-bottom:12px">要把除数变成整数，正确的一步转化是？（被除数、除数的小数点要<b>同时</b>右移）</div>
+      <div id="pOptions"></div>
+      <div class="feedback" id="pFeedback" role="status" aria-live="polite"></div>
+      <button class="btn green" id="pNextQ" style="display:none">下一题 →</button>
+    </div>
+  </div>
+
+  <!-- 闯关挑战 -->
+  <div class="section game">
+    <h2>🏆 闯关挑战 · 除法小达人</h2>
+    <div class="score-strip">
+      <span>第 <b id="gRound">1</b> / <span id="gTotal">12</span> 关</span><span>答对 <b id="gScore">0</b> 题</span>
+      <span id="gStarHint">答对 9 题盖完成印章</span>
+    </div>
+    <div class="q-text" id="gQuestion"></div>
+    <div id="gOptions"></div>
+    <div class="feedback" id="gFeedback" role="status" aria-live="polite"></div>
+    <button class="btn green" id="gNext" style="display:none">下一关 →</button>
+    <div id="gFinal" style="display:none;font-size:22px;margin-top:10px"></div>
+  </div>
+
+</div>
+<script src="js/app-core.js"></script>
+<script src="js/common.js"></script>
+<script src="js/labs-arithmetic.js"></script>
+<script src="js/labs-geometry.js"></script>
+<script src="js/vertical-calc.js?v=13"></script>
+<script src="js/handwrite.js?v=13"></script>
+<script src="js/unit3.js"></script>
+<script src="js/pwa.js"></script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#35253a">
+<title>单元七 · 多边形的面积｜面积侦探</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/math-mystery.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/mystery.css?v=13">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="section teach">
+    <h2>🎬 跟我学 · 面积公式是怎么来的</h2>
+    <div id="demoBtns" style="margin-bottom:14px"></div>
+    <div class="demo-stage" id="demoStage">
+      <p style="color:#90a4ae">选一个图形，点「下一步」看它怎么变成长方形</p>
+    </div>
+    <div class="step-controls">
+      <button class="btn green" id="btnPrev">← 上一步</button>
+      <button class="btn" id="btnNext">下一步 →</button>
+      <button class="btn orange" id="btnReset">重新演示</button>
+      <span class="step-indicator" id="stepIndicator"></span>
+    </div>
+  </div>
+
+  <div class="section why">
+    <h2>💡 方法揭秘 · 三个公式 + 一个思想</h2>
+    <div class="why-card">
+      <b>🔑 核心思想：转化。</b><br>
+      不会算的新图形 → 剪一剪、拼一拼 → 变成会算的<b>长方形（或平行四边形）</b>。这个办法叫<b>割补法</b>。
+    </div>
+    <div class="why-card">
+      <b>▭ 平行四边形：S = 底 × 高</b><br>
+      沿<b>高</b>剪下一个三角形，平移到另一边，拼成长方形。<br>
+      长方形的<b>长 = 平行四边形的底</b>，<b>宽 = 平行四边形的高</b>。
+    </div>
+    <div class="why-card">
+      <b>🔺 三角形：S = 底 × 高 ÷ 2</b><br>
+      两个<b>完全一样</b>的三角形，旋转 180° 后拼成一个平行四边形。<br>
+      一个三角形正好是拼成的平行四边形的<b>一半</b>，所以要<b>÷ 2</b>。
+    </div>
+    <div class="why-card">
+      <b>⬟ 梯形：S =（上底 + 下底）× 高 ÷ 2</b><br>
+      两个<b>完全一样</b>的梯形旋转 180° 拼成平行四边形：<br>
+      它的<b>底 = 上底 + 下底</b>，<b>高不变</b>，所以还要 <b>÷ 2</b>。
+    </div>
+    <div class="why-card">
+      <b>⚠️ 易错辨析</b>
+      <div class="compare">
+        <div class="cmp-box wrongbox">
+          <h4>❌ 常见错误</h4>
+          三角形面积忘了 <b>÷ 2</b>；<br>
+          梯形只用了一个底；<br>
+          把<b>斜边</b>当成了高。
+        </div>
+        <div class="cmp-box right">
+          <h4>✅ 正确做法</h4>
+          三角形、梯形都要 <b>÷ 2</b>；<br>
+          梯形用<b>两个底的和</b>；<br>
+          <b>高必须和底垂直</b>（画虚线、标直角）。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section practice">
+    <h2>✏️ 亲手练 · 算面积</h2>
+    <div class="score-strip"><span>第 <b id="pRound">1</b> / <span id="pTotal">6</span> 题</span></div>
+    <div class="q-text" id="pQuestion" style="text-align:center"></div>
+    <div id="pOptions" style="text-align:center"></div>
+    <div class="feedback" id="pFeedback" role="status" aria-live="polite" style="text-align:center"></div>
+    <div style="text-align:center"><button class="btn green" id="pNextQ" style="display:none">下一题 →</button></div>
+  </div>
+
+  <div class="section game">
+    <h2>🏆 闯关挑战 · 面积小专家</h2>
+    <div class="score-strip">
+      <span>第 <b id="gRound">1</b> / <span id="gTotal">8</span> 关</span>
+      <span>答对 <b id="gScore">0</b> 题</span>
+      <span id="gStarHint">答对 6 题盖完成印章</span>
+    </div>
+    <div class="q-text" id="gQuestion" style="text-align:center"></div>
+    <div id="gOptions" style="text-align:center"></div>
+    <div class="feedback" id="gFeedback" role="status" aria-live="polite" style="text-align:center"></div>
+    <div style="text-align:center"><button class="btn green" id="gNext" style="display:none">下一关 →</button></div>
+    <div id="gFinal" style="display:none;font-size:22px;margin-top:10px;text-align:center"></div>
+  </div>
+
+</div>
+<script src="js/app-core.js"></script>
+<script src="js/common.js"></script>
+<script src="js/labs-arithmetic.js"></script>
+<script src="js/labs-geometry.js"></script>
+<script src="js/handwrite.js?v=13"></script>
+<script src="js/unit7.js"></script>
+<script src="js/pwa.js"></script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#35253a">
+<title>单元九 · 有趣的密铺｜密铺工坊</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/math-mystery.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/mystery.css?v=13">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="section teach">
+    <h2>🎬 跟我学 · 什么图形能铺满地面</h2>
+    <div id="demoBtns" style="margin-bottom:14px"></div>
+    <div class="demo-stage" id="demoStage">
+      <p style="color:#90a4ae">选一种图形，点「下一步」看它能不能铺满</p>
+    </div>
+    <div class="step-controls">
+      <button class="btn green" id="btnPrev">← 上一步</button>
+      <button class="btn" id="btnNext">下一步 →</button>
+      <button class="btn orange" id="btnReset">重新演示</button>
+      <span class="step-indicator" id="stepIndicator"></span>
+    </div>
+  </div>
+
+  <div class="section why">
+    <h2>💡 方法揭秘 · 密铺的秘密</h2>
+    <div class="why-card">
+      <b>🧩 什么叫密铺？</b><br>
+      用一种（或几种）图形铺满平面，图形之间<b>不留空隙、不重叠</b>——这就是密铺（镶嵌）。
+    </div>
+    <div class="why-card">
+      <b>🔑 关键在「拼接点」。</b><br>
+      几个图形拼在一个点的周围，它们在这个点上的几个角加起来<b>正好是 360°</b>，才能铺得严丝合缝。
+    </div>
+    <div class="why-card">
+      <b>✅ 能密铺的图形</b>
+      <div class="compare">
+        <div class="cmp-box right">
+          <h4>正方形 / 长方形</h4>
+          每个角 90°，4 个角拼在一起：90×4 = <b>360°</b> ✓
+        </div>
+        <div class="cmp-box right">
+          <h4>正六边形</h4>
+          每个角 120°，3 个角拼在一起：120×3 = <b>360°</b> ✓
+        </div>
+        <div class="cmp-box right">
+          <h4>任意三角形 / 任意四边形</h4>
+          三角形 6 个、四边形 4 个围一圈，内角和刚好凑成 <b>360°</b> ✓
+        </div>
+      </div>
+    </div>
+    <div class="why-card">
+      <b>❌ 正五边形为什么不行？</b><br>
+      正五边形每个内角 <b>108°</b>：3 个是 324°（<b>差 36°，有缝</b>），4 个是 432°（<b>超出 72°，重叠</b>）。怎么都凑不成 360°。
+    </div>
+    <div class="why-card">
+      <b>⚠️ 易错辨析</b>
+      <div class="compare">
+        <div class="cmp-box wrongbox">
+          <h4>❌ 常见错误</h4>
+          "正五边形也能密铺"；<br>
+          "只要图形一样就能铺满"。
+        </div>
+        <div class="cmp-box right">
+          <h4>✅ 正确判断</h4>
+          算一算拼接点周围<b>几个角的和</b>是不是 <b>360°</b>；<br>
+          正多边形里只有<b>正三角形、正方形、正六边形</b>能单独密铺。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section practice">
+    <h2>✏️ 亲手练 · 能不能密铺</h2>
+    <div class="score-strip"><span>第 <b id="pRound">1</b> / <span id="pTotal">4</span> 题</span></div>
+    <div class="q-text" id="pQuestion" style="text-align:center"></div>
+    <div id="pOptions" style="text-align:center"></div>
+    <div class="feedback" id="pFeedback" role="status" aria-live="polite" style="text-align:center"></div>
+    <div style="text-align:center"><button class="btn green" id="pNextQ" style="display:none">下一题 →</button></div>
+  </div>
+
+  <div class="section game">
+    <h2>🏆 闯关挑战 · 密铺小工匠</h2>
+    <div class="score-strip">
+      <span>第 <b id="gRound">1</b> / <span id="gTotal">6</span> 关</span>
+      <span>答对 <b id="gScore">0</b> 题</span>
+      <span id="gStarHint">答对 5 题盖完成印章</span>
+    </div>
+    <div class="q-text" id="gQuestion" style="text-align:center"></div>
+    <div id="gOptions" style="text-align:center"></div>
+    <div class="feedback" id="gFeedback" role="status" aria-live="polite" style="text-align:center"></div>
+    <div style="text-align:center"><button class="btn green" id="gNext" style="display:none">下一关 →</button></div>
+    <div id="gFinal" style="display:none;font-size:22px;margin-top:10px;text-align:center"></div>
+  </div>
+
+</div>
+<script src="js/app-core.js"></script>
+<script src="js/common.js"></script>
+<script src="js/labs-arithmetic.js"></script>
+<script src="js/labs-geometry.js"></script>
+<script src="js/handwrite.js?v=13"></script>
+<script src="js/unit9.js"></script>
+<script src="js/pwa.js"></script>
+</body>
+</html>

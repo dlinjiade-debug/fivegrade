@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#35253a">
+<title>单元四 · 图形的运动｜轨迹重建</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/math-mystery.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/mystery.css?v=13">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="section teach">
+    <h2>🎬 跟我学 · 三种运动动起来</h2>
+    <div id="demoBtns" style="margin-bottom:14px"></div>
+    <div class="demo-stage" id="demoStage">
+      <p style="color:#7d8b96">选择一种运动，点「下一步」看它一步一步怎么动</p>
+    </div>
+    <div class="step-controls">
+      <button class="btn green" id="btnPrev">← 上一步</button>
+      <button class="btn" id="btnNext">下一步 →</button>
+      <button class="btn orange" id="btnReset">重新演示</button>
+      <span class="step-indicator" id="stepIndicator"></span>
+    </div>
+  </div>
+
+  <div class="section why">
+    <h2>💡 方法揭秘 · 三种运动的要点</h2>
+    <div class="why-card">
+      <b>➡️ 平移：只走直线，不转身。</b><br>
+      两个要素：<b>方向</b> + <b>距离</b>（向哪走、走几格）。图形的<b>形状、大小、朝向全都不变</b>，只是位置变了。
+    </div>
+    <div class="why-card">
+      <b>🔄 旋转：绕着一个点转圈圈。</b><br>
+      三个要素：<b>旋转中心</b>（绕哪个点）+ <b>方向</b>（顺时针/逆时针）+ <b>角度</b>（转多少度）。<br>
+      小技巧：把三角尺按在「旋转中心」上转一转，感受一下！
+    </div>
+    <div class="why-card">
+      <b>🪞 轴对称：照镜子。</b><br>
+      关键：<b>对应点到对称轴的距离相等</b>。数格子：轴这边 3 格，那边也要 3 格！
+    </div>
+    <div class="why-card">
+      <b>⚠️ 易错辨析</b>
+      <div class="compare">
+        <div class="cmp-box wrongbox">
+          <h4>❌ 常见错误</h4>
+          平移后图形「转了个方向」——错！<br>
+          对称点只数一边的格子——错！
+        </div>
+        <div class="cmp-box right">
+          <h4>✅ 正确做法</h4>
+          平移：<b>朝向不变</b>只挪位置；<br>
+          轴对称：两边<b>都数</b>，距离要<b>相等</b>。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section practice">
+    <h2>✏️ 亲手练 · 找到平移后的图形</h2>
+    <div class="score-strip"><span>第 <b id="pRound">1</b> / <span id="pTotal">5</span> 题</span></div>
+    <div class="q-text" id="pQuestion" style="text-align:center"></div>
+    <div id="pOptions" style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center"></div>
+    <div class="feedback" id="pFeedback" role="status" aria-live="polite" style="text-align:center"></div>
+    <div style="text-align:center"><button class="btn green" id="pNextQ" style="display:none">下一题 →</button></div>
+  </div>
+
+  <div class="section game">
+    <h2>🏆 闯关挑战 · 图形变形记</h2>
+    <div class="score-strip">
+      <span>第 <b id="gRound">1</b> / <span id="gTotal">8</span> 关</span><span>答对 <b id="gScore">0</b> 题</span>
+      <span id="gStarHint">答对 6 题盖完成印章</span>
+    </div>
+    <div class="q-text" id="gQuestion" style="text-align:center"></div>
+    <div style="display:flex;justify-content:center;align-items:center;gap:20px;flex-wrap:wrap">
+      <div id="gBefore" style="background:#fff;border:2px solid #dfe6ea;border-radius:12px;padding:10px"></div>
+      <div style="font-size:34px">➜</div>
+      <div id="gAfter" style="background:#fff;border:2px solid #dfe6ea;border-radius:12px;padding:10px"></div>
+    </div>
+    <div id="gOptions" style="text-align:center;margin-top:12px"></div>
+    <div class="feedback" id="gFeedback" role="status" aria-live="polite" style="text-align:center"></div>
+    <div style="text-align:center"><button class="btn green" id="gNext" style="display:none">下一关 →</button></div>
+    <div id="gFinal" style="display:none;font-size:22px;margin-top:10px;text-align:center"></div>
+  </div>
+
+</div>
+<script src="js/app-core.js"></script>
+<script src="js/common.js"></script>
+<script src="js/labs-arithmetic.js"></script>
+<script src="js/labs-geometry.js"></script>
+<script src="js/handwrite.js?v=13"></script>
+<script src="js/unit4.js"></script>
+<script src="js/pwa.js"></script>
+</body>
+</html>
