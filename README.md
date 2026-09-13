@@ -4,6 +4,10 @@
 
 特色包括导演模式/闯关模式、慢速手写竖式、空间模型、面积切割、天平方程、概率实验和九章精华讲义。
 
+## 在线访问
+
+https://dlinjiade-debug.github.io/fivegrade/
+
 ## 本地运行
 
 ```powershell
