@@ -23,9 +23,13 @@ test("PWA precache covers every lesson, shared stylesheet, and core learning scr
   const handwriteReleaseAsset = `./js/handwrite.js?v=${version}`;
   const verticalReleaseAsset = `./js/vertical-calc.js?v=${version}`;
   const mysteryStyleReleaseAsset = `./css/mystery.css?v=${version}`;
+  const commonReleaseAsset = `./js/common.js?v=${version}`;
+  const coreReleaseAsset = `./js/app-core.js?v=${version}`;
   assert.ok(PWA.PRECACHE_URLS.includes(handwriteReleaseAsset), "手写引擎发布版应使用版本化缓存键");
   assert.ok(PWA.PRECACHE_URLS.includes(verticalReleaseAsset), "竖式引擎发布版应使用版本化缓存键");
   assert.ok(PWA.PRECACHE_URLS.includes(mysteryStyleReleaseAsset), "工作台样式发布版应使用版本化缓存键");
+  assert.ok(PWA.PRECACHE_URLS.includes(commonReleaseAsset), "公共工作台发布版应使用版本化缓存键");
+  assert.ok(PWA.PRECACHE_URLS.includes(coreReleaseAsset), "课程核心发布版应使用版本化缓存键");
   for (const page of ["unit2.html", "unit3.html"]) {
     const html = fs.readFileSync(path.join(root, page), "utf8");
     assert.match(html, new RegExp(`js/vertical-calc\\.js\\?v=${version}`));
@@ -33,6 +37,8 @@ test("PWA precache covers every lesson, shared stylesheet, and core learning scr
   for (const page of ["index.html", ...Array.from({ length: 9 }, (_, i) => `unit${i + 1}.html`)]) {
     const html = fs.readFileSync(path.join(root, page), "utf8");
     assert.match(html, new RegExp(`css/mystery\\.css\\?v=${version}`));
+    assert.match(html, new RegExp(`js/app-core\\.js\\?v=${version}`));
+    assert.match(html, new RegExp(`js/common\\.js\\?v=${version}`));
   }
   for (const page of Array.from({ length: 9 }, (_, i) => `unit${i + 1}.html`)) {
     const html = fs.readFileSync(path.join(root, page), "utf8");

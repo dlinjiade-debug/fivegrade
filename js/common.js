@@ -101,8 +101,11 @@ const Math5 = {
   loadMysterySettings() {
     try {
       const saved = JSON.parse(localStorage.getItem(this.SETTINGS_KEY)) || {};
-      return { reducedMotion: !!saved.reducedMotion };
-    } catch (e) { return { reducedMotion: false }; }
+      const panels = window.MysteryCore
+        ? MysteryCore.normalizeWorkbenchPanels(saved)
+        : { railCollapsed: saved.railCollapsed === true };
+      return { reducedMotion: !!saved.reducedMotion, railCollapsed: panels.railCollapsed };
+    } catch (e) { return { reducedMotion: false, railCollapsed: false }; }
   },
 
   saveMysterySettings(settings) {
@@ -143,6 +146,7 @@ const Math5 = {
       pause: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>',
       play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7V5Z"/></svg>',
       hide: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3 21 21M10.7 7.1A10.8 10.8 0 0 1 12 7c6.2 0 9.5 5 9.5 5a14 14 0 0 1-3 3.3M6.1 6.2A15.7 15.7 0 0 0 2.5 12s3.3 5 9.5 5c1.1 0 2.1-.2 3-.4M9.9 9.8a3 3 0 0 0 4.3 4.3"/></svg>',
+      chevron: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>',
     };
     function icon(name) { return '<span class="mystery-icon">' + icons[name] + '</span>'; }
 
@@ -160,6 +164,11 @@ const Math5 = {
     this.saveMysterySession(saved);
 
     const settings = this.loadMysterySettings();
+    const panelState = core
+      ? core.normalizeWorkbenchPanels(settings)
+      : { railCollapsed: !!settings.railCollapsed, taskCollapsed: true };
+    state.railCollapsed = panelState.railCollapsed;
+    state.taskCollapsed = panelState.taskCollapsed;
     document.body.className = (document.body.className + " mystery-unit").trim();
     document.body.dataset.mode = state.mode;
     document.body.classList.toggle("reduce-motion", settings.reducedMotion);
@@ -183,7 +192,9 @@ const Math5 = {
     const rail = document.createElement("aside");
     rail.className = "case-rail";
     rail.setAttribute("aria-label", "数学案卷");
-    rail.innerHTML = '<div class="rail-title"><span>数学案例档案</span><small>CASE FILES</small></div><nav>' + cases.map(function (item) {
+    rail.innerHTML = '<button type="button" class="rail-toggle" id="mysteryRailToggle" aria-controls="mysteryCaseNav">' + icon("chevron") + '<span class="panel-toggle-label">收起目录</span></button>' +
+      '<span class="rail-collapsed-label" aria-hidden="true">案卷目录</span>' +
+      '<div class="rail-title"><span>数学案例档案</span><small>CASE FILES</small></div><nav id="mysteryCaseNav">' + cases.map(function (item) {
       const active = item.id === unitId ? " is-active" : "";
       const complete = Math5.isUnitComplete(item.id) ? " is-complete" : "";
       return '<a class="case-link' + active + complete + '" href="' + item.id + '.html" aria-current="' + (active ? "page" : "false") + '">' +
@@ -238,10 +249,17 @@ const Math5 = {
 
     const cluePanel = document.createElement("aside");
     cluePanel.className = "clue-panel";
+    cluePanel.id = "mysteryTaskPanel";
+    cluePanel.setAttribute("aria-label", "本步任务与提示");
     cluePanel.innerHTML =
-      '<div class="clue-tab">当前线索</div><div class="clue-sheet"><span class="clue-case">' + currentCase.officialName + '</span><span class="clue-alias">' + currentCase.caseName + '</span>' +
-      '<div class="clue-rule"><span></span>' + icon("clue") + '<span></span></div><h2>' + currentCase.question + '</h2>' +
-      '<div class="clue-copy" id="mysteryClueCopy">先观察中央证物，暂时不要急着看结论。</div><div class="clue-status" id="mysteryStatus" aria-live="polite"></div></div>';
+      '<button type="button" class="task-panel-toggle" id="mysteryTaskToggle" aria-controls="mysteryTaskSheet">' + icon("chevron") + '<span class="panel-toggle-label">收起任务</span></button>' +
+      '<div class="task-collapsed-copy" aria-hidden="true"><strong id="mysteryTaskStepMini">1</strong><span>本步任务</span></div>' +
+      '<div class="clue-tab">本步任务</div><div class="clue-sheet" id="mysteryTaskSheet">' +
+      '<div class="task-step"><span id="mysteryTaskStep">第 1 / 5 步</span><b id="mysteryTaskLabel">提出谜题</b></div>' +
+      '<div class="clue-rule"><span></span>' + icon("clue") + '<span></span></div><h2 id="mysteryTaskAction">' + currentCase.question + '</h2>' +
+      '<div class="task-done"><span>完成标志</span><b id="mysteryTaskDone">作出一次选择或操作</b></div>' +
+      '<div class="clue-copy" id="mysteryClueCopy"><span class="task-hint-placeholder">需要时点击“给一点提示”</span></div>' +
+      '<div class="clue-status" id="mysteryStatus" aria-live="polite"></div></div>';
 
     const dock = document.createElement("footer");
     dock.className = "director-dock";
@@ -279,7 +297,7 @@ const Math5 = {
       labController = pack.mount(unitId, labContainer, {
         onInteract: function (message) {
           state.interacted.brief = true;
-          if (message) document.getElementById("mysteryStatus").textContent = message;
+          if (message) setStatus(message, "ok");
         },
       });
     } else {
@@ -315,17 +333,56 @@ const Math5 = {
     function renderHints() {
       const box = document.getElementById("mysteryClueCopy");
       const lines = core ? core.hintLines(unitId, state.hintLevel) : (state.hintLevel ? [currentCase.clue] : []);
-      const lead = core ? core.stageLead(unitId, state.stageId) : currentCase.clue;
-      box.innerHTML = lines.length ? lines.map(function (line) { return '<p>' + line + '</p>'; }).join("") : lead;
+      box.innerHTML = lines.length
+        ? lines.map(function (line) { return '<p>' + line + '</p>'; }).join("")
+        : '<span class="task-hint-placeholder">需要时点击“给一点提示”</span>';
+    }
+
+    function renderTask() {
+      const fallbackIndex = Math.max(0, flow.findIndex(function (item) { return item.id === state.stageId; }));
+      const task = core ? core.stageTask(unitId, state.stageId) : {
+        step: fallbackIndex + 1,
+        total: flow.length,
+        label: flow[fallbackIndex].label,
+        action: currentCase.question,
+        done: "完成本步操作",
+      };
+      document.getElementById("mysteryTaskStep").textContent = "第 " + task.step + " / " + task.total + " 步";
+      document.getElementById("mysteryTaskStepMini").textContent = task.step;
+      document.getElementById("mysteryTaskLabel").textContent = task.label;
+      document.getElementById("mysteryTaskAction").textContent = task.action;
+      document.getElementById("mysteryTaskDone").textContent = task.done;
+    }
+
+    function renderWorkbenchLayout() {
+      document.body.dataset.railCollapsed = state.railCollapsed ? "true" : "false";
+      document.body.dataset.taskCollapsed = state.taskCollapsed ? "true" : "false";
+      const railToggle = document.getElementById("mysteryRailToggle");
+      const taskToggle = document.getElementById("mysteryTaskToggle");
+      railToggle.setAttribute("aria-expanded", state.railCollapsed ? "false" : "true");
+      railToggle.setAttribute("aria-label", state.railCollapsed ? "展开案卷目录" : "收起案卷目录");
+      railToggle.title = state.railCollapsed ? "展开案卷目录" : "收起案卷目录";
+      railToggle.querySelector(".panel-toggle-label").textContent = state.railCollapsed ? "展开目录" : "收起目录";
+      taskToggle.setAttribute("aria-expanded", state.taskCollapsed ? "false" : "true");
+      taskToggle.setAttribute("aria-label", state.taskCollapsed ? "展开本步任务" : "收起本步任务");
+      taskToggle.title = state.taskCollapsed ? "展开本步任务" : "收起本步任务";
+      taskToggle.querySelector(".panel-toggle-label").textContent = state.taskCollapsed ? "展开任务" : "收起任务";
     }
 
     function setStatus(message, tone) {
       const el = document.getElementById("mysteryStatus");
       el.textContent = message || "";
       el.dataset.tone = tone || "";
+      cluePanel.classList.toggle("has-status", !!message);
+      if (message && tone === "warn") {
+        state.taskCollapsed = false;
+        renderWorkbenchLayout();
+      }
     }
 
     function render() {
+      renderWorkbenchLayout();
+      renderTask();
       document.body.dataset.mode = state.mode;
       document.querySelectorAll(".mode-switch [data-mode]").forEach(function (button) {
         const active = button.dataset.mode === state.mode;
@@ -359,6 +416,7 @@ const Math5 = {
       if (__currentStepper && __currentStepper.playing) __currentStepper.stop();
       state.stageId = nextStage;
       state.hintLevel = 0;
+      state.taskCollapsed = true;
       setStatus("");
       render();
       workspace.scrollTo({ top: 0, behavior: settings.reducedMotion ? "auto" : "smooth" });
@@ -381,8 +439,19 @@ const Math5 = {
     };
     document.getElementById("mysteryHint").onclick = function () {
       state.hintLevel = core ? core.nextHintLevel(state.hintLevel) : Math.min(2, state.hintLevel + 1);
+      state.taskCollapsed = false;
       setStatus(state.hintLevel === 2 ? "最后一层线索已展开。" : "第一层线索已展开。", "ok");
       render();
+    };
+    document.getElementById("mysteryRailToggle").onclick = function () {
+      state.railCollapsed = !state.railCollapsed;
+      settings.railCollapsed = state.railCollapsed;
+      Math5.saveMysterySettings(settings);
+      renderWorkbenchLayout();
+    };
+    document.getElementById("mysteryTaskToggle").onclick = function () {
+      state.taskCollapsed = !state.taskCollapsed;
+      renderWorkbenchLayout();
     };
     document.getElementById("mysteryPrimary").onclick = function () {
       if (state.stageId === "challenge") {

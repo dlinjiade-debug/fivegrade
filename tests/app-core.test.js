@@ -97,6 +97,51 @@ test("右侧线索随当前破案步骤变化", () => {
   assert.equal(Core.stageLead("unit1", "challenge"), "独立完成，需要时只打开一层提示。");
 });
 
+test("工作台默认保留目录并收起任务抽屉，且只接受布尔偏好", () => {
+  assert.deepEqual(Core.normalizeWorkbenchPanels(), {
+    railCollapsed: false,
+    taskCollapsed: true,
+  });
+  assert.deepEqual(Core.normalizeWorkbenchPanels({
+    railCollapsed: true,
+    taskCollapsed: false,
+  }), {
+    railCollapsed: true,
+    taskCollapsed: false,
+  });
+  assert.deepEqual(Core.normalizeWorkbenchPanels({
+    railCollapsed: "true",
+    taskCollapsed: "false",
+  }), {
+    railCollapsed: false,
+    taskCollapsed: true,
+  });
+});
+
+test("本步任务卡给出当前步骤、具体操作和完成标志", () => {
+  assert.deepEqual(Core.stageTask("unit4", "evidence"), {
+    step: 2,
+    total: 5,
+    label: "收集线索",
+    action: "跟着演示，重点观察：比较对应点、移动方向与旋转中心。",
+    done: "完成一次演示或观察",
+  });
+  assert.deepEqual(Core.stageTask("unit2", "investigate"), {
+    step: 3,
+    total: 5,
+    label: "动手验证",
+    action: "自己操作：逐笔完成竖式并放置积的小数点。",
+    done: "提交一次判断或结果",
+  });
+  assert.deepEqual(Core.stageTask("missing", "missing"), {
+    step: 1,
+    total: 5,
+    label: "提出谜题",
+    action: "先判断：被挡住的方块藏在哪里？",
+    done: "作出一次选择或操作",
+  });
+});
+
 test("教材官方单元名是主名称，案卷特色名是副标题", () => {
   assert.deepEqual(Core.caseIdentity("unit2"), {
     title: "小数乘法",
