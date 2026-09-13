@@ -5,3 +5,4 @@ qa-*.png
 tmp-*.png
 tmp/
 node_modules/
+.workbuddy/
