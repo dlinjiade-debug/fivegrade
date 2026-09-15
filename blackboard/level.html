@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>闯关中 · 粉笔小闯关</title>
+<!-- 页面自己的报错记在这里，浏览器自检会读它（tools/browser-check.html） -->
+<script>window.__bbErrors=[];window.addEventListener("error",function(e){window.__bbErrors.push((e.message||"脚本报错")+" @"+String(e.filename||"").split("/").pop()+":"+(e.lineno||0));});window.addEventListener("unhandledrejection",function(e){window.__bbErrors.push("未处理的 Promise："+((e.reason&&e.reason.message)||e.reason));});</script>
+<meta name="description" content="先在黑板上看懂这一步，再做这一关的练习。">
+<link rel="stylesheet" href="./css/blackboard.css?v=4">
+</head>
+<body class="bb">
+
+<header class="bb-head">
+  <a class="bb-back" href="./index.html">← 关卡地图</a>
+  <div class="bb-brand">
+    <h1 id="lvTitle">加载中…</h1>
+    <span class="bb-sub" id="lvUnit"></span>
+  </div>
+  <span class="bb-chip" id="phaseTag">阶段一 · 讲解</span>
+</header>
+
+<main class="bb-wrap">
+
+  <div class="bb-bar" style="margin:0 0 6px">
+    <span class="bb-qno" id="lvNo">第 1 关</span>
+    <span class="bb-qtype" id="lvSub"></span>
+  </div>
+
+  <!-- 黑板 -->
+  <div class="bb-frame">
+    <div class="bb-board" id="boardHost" role="group" aria-label="黑板板书"></div>
+    <div class="bb-tray">
+      <span class="bb-stick"></span>
+      <span class="bb-stick y"></span>
+      <span class="bb-stick g"></span>
+      <span class="bb-eraser"></span>
+    </div>
+  </div>
+
+  <!-- 讲解字幕 -->
+  <div class="bb-caption">
+    <div class="bb-c-text" id="capText">正在准备黑板…</div>
+    <div class="bb-c-tip" id="capTip"></div>
+  </div>
+
+  <!-- 控制条 -->
+  <div class="bb-bar">
+    <button class="bb-btn" id="prevBtn" type="button">← 上一步</button>
+    <button class="bb-btn" id="replayBtn" type="button">重播这一步</button>
+    <button class="bb-btn primary" id="nextBtn" type="button">下一步 →</button>
+    <button class="bb-btn primary" id="startPractice" type="button" style="display:none">开始闯关练习 →</button>
+    <button class="bb-btn ghost" id="autoBtn" type="button">自动讲解</button>
+    <div class="bb-dots" id="stepDots" role="group" aria-label="讲解步骤"></div>
+  </div>
+
+  <!-- 阶段二：练习 -->
+  <section class="bb-practice" id="practice" hidden>
+    <div class="bb-panel" id="practicePanel"></div>
+  </section>
+
+  <!-- 本关要点 -->
+  <section class="bb-summary">
+    <div class="bb-note">
+      <h4>这一关要学会</h4>
+      <p style="margin:0;font-size:14.5px;line-height:1.8;color:var(--chalk-dim)" id="lvGoal"></p>
+    </div>
+    <div class="bb-note">
+      <h4>三句话记住它</h4>
+      <ul id="lvKeys"></ul>
+    </div>
+  </section>
+
+</main>
+
+<footer class="bb-foot">
+  键盘：← → 翻讲解，空格下一步，R 重播
+</footer>
+
+<script src="./lib/handwrite.js?v=4"></script>
+<script src="./js/bb-core.js?v=4"></script>
+<script src="./js/bb-chalk.js?v=4"></script>
+<script src="./js/bb-levels.js?v=4"></script>
+<script src="./js/bb-app.js?v=4"></script>
+<script>
+(function () {
+  "use strict";
+  document.body.classList.toggle("reduce-motion", window.BBApp.prefersReducedMotion());
+  window.BBApp.startLevel();
+})();
+</script>
+</body>
+</html>

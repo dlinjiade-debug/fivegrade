@@ -1,6 +1,6 @@
 // Keep this query version in sync with MathMysteryPWA.CACHE_NAME so an installed
 // worker itself changes whenever a release needs a fresh offline asset set.
-importScripts("./js/pwa-config.js?v=14");
+importScripts("./js/pwa-config.js?v=15");
 
 const PWA = self.MathMysteryPWA;
 const CACHE_NAME = PWA.CACHE_NAME;

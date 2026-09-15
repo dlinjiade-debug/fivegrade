@@ -2,6 +2,8 @@
 .qa-edge-*/
 .superpowers/
 qa-*.png
+# 无头浏览器的验收截图：随时可重新生成，不进版本库（blackboard/shots/ 也归这条管）
+shots/
 tmp-*.png
 tmp/
 node_modules/

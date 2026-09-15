@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>粉笔小闯关 · 五年级小数乘法</title>
+<!-- 页面自己的报错记在这里，浏览器自检会读它（tools/browser-check.html） -->
+<script>window.__bbErrors=[];window.addEventListener("error",function(e){window.__bbErrors.push((e.message||"脚本报错")+" @"+String(e.filename||"").split("/").pop()+":"+(e.lineno||0));});window.addEventListener("unhandledrejection",function(e){window.__bbErrors.push("未处理的 Promise："+((e.reason&&e.reason.message)||e.reason));});</script>
+<meta name="description" content="跟着粉笔一笔一笔写竖式，八关闯关学会人教版五年级上册的小数乘法。">
+<link rel="stylesheet" href="./css/blackboard.css?v=4">
+</head>
+<body class="bb">
+
+<header class="bb-head">
+  <div class="bb-brand">
+    <h1>粉笔小闯关</h1>
+    <span class="bb-sub">五年级上册 · 第 1 单元 小数乘法</span>
+  </div>
+  <span class="bb-chip">人教版</span>
+</header>
+
+<main class="bb-wrap">
+
+  <!-- 黑板：写一段欢迎与玩法 -->
+  <div class="bb-frame">
+    <div class="bb-board" id="boardHost" role="group" aria-label="黑板：欢迎与玩法说明"></div>
+    <div class="bb-tray">
+      <span class="bb-stick"></span>
+      <span class="bb-stick y"></span>
+      <span class="bb-stick g"></span>
+      <span class="bb-eraser"></span>
+    </div>
+  </div>
+
+  <div class="bb-bar">
+    <a class="bb-btn primary" id="resumeBtn" href="./level.html?no=1">从第 1 关开始</a>
+    <div class="bb-progress" id="mapProgress" role="img" aria-label="通关进度"></div>
+    <span class="bb-score" id="mapProgressLabel">已通关 0 / 8 关</span>
+    <button class="bb-btn ghost" id="clearBtn" type="button">清空进度</button>
+  </div>
+
+  <div class="bb-bar" style="margin-top:20px">
+    <span class="bb-caption" style="flex:1;border-left-color:var(--good);margin:0">
+      <span class="bb-c-text" style="font-size:16px">先看黑板讲解，再做这一关的练习；答对 8 成以上才算通关。</span>
+    </span>
+  </div>
+
+  <!-- 关卡地图 -->
+  <nav class="bb-map" id="mapGrid" aria-label="关卡列表"></nav>
+
+  <section class="bb-summary">
+    <div class="bb-note">
+      <h4>这三条吃透了，小数乘法就稳了</h4>
+      <ul>
+        <li>先按整数乘法算，最后再处理小数点</li>
+        <li>两个因数一共有几位小数，积就从右边数几位</li>
+        <li>积的末尾有 0，一定要划掉</li>
+      </ul>
+    </div>
+    <div class="bb-note">
+      <h4>最容易丢分的地方</h4>
+      <ul>
+        <li>小数位数数少了（0.76×4.7 是 3 位，不是 2 位）</li>
+        <li>位数不够忘了在前面补 0（0.048×0.15＝0.0072）</li>
+        <li>用分配律时漏乘了一块（(8－0.8)×12.5 里的 0.8）</li>
+      </ul>
+    </div>
+    <div class="bb-note">
+      <h4>怎么操作</h4>
+      <ul>
+        <li>「下一步」看下一节讲解，「重播」再写一遍</li>
+        <li>「自动讲解」让它自己一关一关写下去</li>
+        <li>键盘 ← → 翻页，空格下一步，R 重播</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<footer class="bb-foot">
+  依据人教版五年级上册第一单元达标测试卷编写 · 所有题目答案都由算式重新核算过
+</footer>
+
+<script src="./lib/handwrite.js?v=4"></script>
+<script src="./js/bb-core.js?v=4"></script>
+<script src="./js/bb-chalk.js?v=4"></script>
+<script src="./js/bb-levels.js?v=4"></script>
+<script src="./js/bb-app.js?v=4"></script>
+<script>
+(function () {
+  "use strict";
+  var host = document.getElementById("boardHost");
+  var board = new window.Chalk.Board(host);
+  var cn = function (t, x, y, s, tone) { return { k: "cn", text: t, x: x, y: y, size: s || 26, tone: tone || "chalk" }; };
+  var num = function (t, x, y, s, tone) { return { k: "num", text: t, x: x, y: y, size: s || 44, tone: tone || "chalk" }; };
+
+  board.load([
+    {
+      text: "欢迎来到小数乘法闯关，一共八关。",
+      tip: "每关都是「先讲、再练」，一步都不跳。",
+      ops: [
+        cn("小数乘法 · 八关小闯关", 64, 46, 50, "accent"),
+        cn("每关两件事：先看黑板讲解，再动手做题。", 64, 148, 27),
+        cn("讲解会一笔一笔写给你看，别急着往后翻。", 64, 196, 27, "muted"),
+        num("0.72 × 5 ＝ 3.6", 64, 262, 52, "chalk"),
+        cn("第一关就从这一道开始。", 64, 358, 27, "good")
+      ]
+    },
+    {
+      text: "做完一关盖一个章，八关全部盖满就通关。",
+      tip: "答对八成以上才算过关，不够可以重做。",
+      ops: [
+        cn("做完一关，盖一个章。", 64, 46, 34, "accent"),
+        cn("八关全部盖满，小数的乘法你就拿下了。", 64, 118, 27),
+        cn("答对 8 成以上才算通关，不够就回去看看黑板。", 64, 166, 27, "muted"),
+        cn("准备好了吗？点下面的卡片开始。", 64, 246, 30, "good")
+      ]
+    }
+  ]);
+
+  /* 系统开了「减少动效」时，板书是直接整块写好的；这时不要自动往下翻，
+     否则屏幕上看不出变化，会让人以为内容丢了。 */
+  var reduced = window.BBApp.prefersReducedMotion();
+  board.on("done", function (e) {
+    if (!reduced && e.index < 1) { setTimeout(function () { board.next(); }, 900); }
+  });
+  board.goto(0);
+
+  window.BBApp.renderMap();
+})();
+</script>
+</body>
+</html>

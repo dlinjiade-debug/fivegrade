@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>粉笔小闯关 · 浏览器自检</title>
+<link rel="stylesheet" href="../css/blackboard.css">
+<style>
+  #boardHost { width: 1280px; height: 720px; position: relative; }
+  .bb-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+</style>
+</head>
+<body class="bb">
+<div id="boardHost"></div>
+<pre id="bb-check-out" style="white-space:pre-wrap;font:13px/1.6 monospace;color:#eee;padding:16px">running…</pre>
+
+<script src="../lib/handwrite.js"></script>
+<script src="../js/bb-core.js"></script>
+<script src="../js/bb-chalk.js"></script>
+<script src="../js/bb-levels.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var errors = [];
+  window.addEventListener("error", function (e) {
+    errors.push(String(e.message) + " @" + (e.filename || "") + ":" + (e.lineno || 0));
+  });
+
+  var pass = 0;
+  var fails = [];
+  function check(name, cond, detail) {
+    if (cond) { pass += 1; return; }
+    fails.push(name + (detail ? "  → " + detail : ""));
+  }
+
+  var HW = window.HW, BB = window.BB, Chalk = window.Chalk, Levels = window.BBLevels;
+  var host = document.getElementById("boardHost");
+
+  /* ---------- 1. 模块与字形引擎 ---------- */
+  check("BB 核心模块加载", !!BB);
+  check("Chalk 引擎加载", !!Chalk);
+  check("关卡数据加载", !!Levels && Levels.LEVELS.length === 8);
+  check("handwrite 字形引擎挂上了", !!(HW && typeof HW.measure === "function"));
+  var eng = BB.engine();
+  check("bb-core 能取到字形引擎（不是退回内置宽度表）", !!(eng && typeof eng.GLYPH === "object"));
+  check("字形表里有数字 0", !!(eng && eng.GLYPH && eng.GLYPH["0"]));
+  check("字宽测量可用", BB.textWidth("0.72×5", 56) > 100, "width=" + BB.textWidth("0.72×5", 56));
+
+  /* ---------- 2. 每关每步：真的会往黑板上写字 ---------- */
+  var visibleOf = function (node) {
+    var n = node;
+    while (n && n !== document.body) {
+      if (n.style && n.style.display === "none") return false;
+      n = n.parentNode;
+    }
+    return true;
+  };
+
+  var board = new Chalk.Board(host);
+  var totalSteps = 0;
+  var emptySteps = [];
+
+  Levels.LEVELS.forEach(function (lv) {
+    board.load(lv.steps);
+    lv.steps.forEach(function (step, si) {
+      totalSteps += 1;
+      board.goto(si, { instant: true });
+      var drawn = 0;
+      board.steps.forEach(function (s, i) {
+        if (i > si) return;
+        s.ops.forEach(function (b) {
+          if (!visibleOf(b.node)) return;
+          b.node.querySelectorAll("path,line,circle,ellipse,rect,text").forEach(function (n) { drawn += 1; });
+        });
+      });
+      if (drawn === 0) emptySteps.push(lv.id + " 第" + (si + 1) + "步");
+    });
+  });
+
+  check("每一关每一步都有板书（" + totalSteps + " 步）", emptySteps.length === 0,
+    "空白的步骤：" + emptySteps.join("、"));
+
+  /* ---------- 3. 中文粉笔字真的写出来了（clipPath 挂得上） ---------- */
+  board.load(Levels.LEVELS[0].steps);
+  board.goto(0, { instant: true });
+  var cnTexts = [];
+  host.querySelectorAll(".bb-chalk-layer > g").forEach(function (g) {
+    if (!visibleOf(g)) return;                 /* 还没讲到的步骤不算数 */
+    g.querySelectorAll("text").forEach(function (t) { cnTexts.push(t); });
+  });
+  var cnVisible = 0;
+  cnTexts.forEach(function (t) {
+    var clip = t.getAttribute("clip-path");
+    if (!clip) { cnVisible += 1; return; }
+    var id = clip.replace(/^url\(#/, "").replace(/\)$/, "");
+    var def = host.querySelector("#" + id + " rect");
+    if (def && parseFloat(def.getAttribute("width")) > 0) cnVisible += 1;
+  });
+  check("这一步的中文粉笔字都写出来了（不是隐身）",
+    cnTexts.length > 0 && cnVisible === cnTexts.length,
+    "可见 " + cnVisible + " / " + cnTexts.length);
+
+  /* ---------- 4. 每一步的元素都落在黑板范围内 ---------- */
+  var outOfBoard = [];
+  Levels.LEVELS.forEach(function (lv) {
+    board.load(lv.steps);
+    lv.steps.forEach(function (step, si) {
+      board.goto(si, { instant: true });
+      host.querySelectorAll(".bb-chalk-layer > g").forEach(function (g) {
+        if (!visibleOf(g)) return;
+        try {
+          var bb = g.getBBox();
+          if (bb.width === 0) return;
+          if (bb.x < -6 || bb.x + bb.width > 1286 || bb.y < -6 || bb.y + bb.height > 726) {
+            outOfBoard.push(lv.id + " 第" + (si + 1) + "步 x=" + Math.round(bb.x) +
+              " w=" + Math.round(bb.width) + " y=" + Math.round(bb.y) + " h=" + Math.round(bb.height));
+          }
+        } catch (e) { /* 未布局时跳过 */ }
+      });
+    });
+  });
+  check("板书全都在黑板范围内", outOfBoard.length === 0, outOfBoard.slice(0, 6).join(" | "));
+
+  /* ---------- 4b. 竖式横线不许压到数字上 ----------
+     横线是「几何线」，getBBox 量不到描边粗细，得自己补上半笔宽；
+     数字是路径，getBBox 给的就是墨迹范围。两者一减就是真实留白。
+     这条门禁是给「横线贴着数字下沿」这种看不出来的毛病兜底的。 */
+  var NUM_STROKE = 4.6;   /* bb-chalk 里数字笔画的 stroke-width */
+  var LINE_STROKE = 3.2;  /* bb-chalk 里横线的 stroke-width */
+  var tightLines = [];
+  var minClearance = Infinity;
+  var rulePairs = 0;
+  var ruleWorst = "";
+
+  function inkBox(g, half) {
+    var bb = g.getBBox();
+    if (!bb || (bb.width === 0 && bb.height === 0)) return null;
+    return { x1: bb.x, x2: bb.x + bb.width, y1: bb.y - half, y2: bb.y + bb.height + half };
+  }
+
+  Levels.LEVELS.forEach(function (lv) {
+    board.load(lv.steps);
+    lv.steps.forEach(function (step, si) {
+      board.goto(si, { instant: true });
+      var groups = [];
+      host.querySelectorAll(".bb-chalk-layer > g").forEach(function (g) {
+        if (visibleOf(g)) groups.push(g);
+      });
+      var lines = groups.filter(function (g) { return g.classList.contains("bb-op-line"); });
+      var nums = groups.filter(function (g) { return g.classList.contains("bb-op-num"); });
+      lines.forEach(function (ln) {
+        var le = ln.querySelector("line");
+        if (!le) return;
+        var ly = parseFloat(le.getAttribute("y1"));
+        var lx1 = Math.min(parseFloat(le.getAttribute("x1")), parseFloat(le.getAttribute("x2")));
+        var lx2 = Math.max(parseFloat(le.getAttribute("x1")), parseFloat(le.getAttribute("x2")));
+        var lineTop = ly - LINE_STROKE / 2;
+        nums.forEach(function (ng) {
+          var nb = inkBox(ng, NUM_STROKE / 2);
+          if (!nb) return;
+          /* 只看横线正上方、且在横线水平范围内的那一行数字 */
+          if (nb.x2 < lx1 || nb.x1 > lx2) return;
+          if (nb.y2 > ly) return;
+          var gap = lineTop - nb.y2;
+          rulePairs += 1;
+          if (gap < minClearance) {
+            minClearance = gap;
+            /* 把最紧那一对的原始数字留档：万一 getBBox 哪天返回的是
+               字形本地坐标（0~52 那一套），这几个数会立刻露馅。 */
+            ruleWorst = lv.id + " 第" + (si + 1) + "步 「" +
+              (ng.getAttribute("data-text") || "?") + "」墨迹底 " + nb.y2.toFixed(1) +
+              "，横线 " + ly.toFixed(1) + "（水平范围 " + Math.round(lx1) + "~" + Math.round(lx2) + "）";
+          }
+          if (gap < 5) {
+            tightLines.push(lv.id + " 第" + (si + 1) + "步 横线离数字只有 " +
+              gap.toFixed(1) + "px（" + (ng.getAttribute("data-text") || "数字") + "）");
+          }
+        });
+      });
+    });
+  });
+
+  check("竖式横线没有压到数字上（全 8 关最紧处留白 " +
+    (minClearance === Infinity ? "n/a" : minClearance.toFixed(1) + "px") + "）",
+    tightLines.length === 0, tightLines.slice(0, 6).join(" | "));
+
+  /* 这条门禁必须能证明自己量到了东西：量到的「横线—数字」对数
+     和最小留白一起报出来，免得 getBBox 悄悄返回空值让它空转。 */
+  var ruleMetrics = { pairs: rulePairs, minClearance: minClearance === Infinity ? null : +minClearance.toFixed(1), worst: ruleWorst };
+  check("这条门禁真的量到了横线（" + rulePairs + " 对），不是空转",
+    rulePairs >= 8 && minClearance < 200,      /* 200 是哨兵：真量到板面坐标不会这么夸张 */
+    "只量到 " + rulePairs + " 对，或坐标不在板面空间。最紧的一对：" + ruleWorst);
+
+  /* ---------- 5. 答案判定：正确答案要判对，错的要判错 ---------- */
+  function correctInput(q) {
+    if (q.type === "choice") return { choice: q.answer };
+    if (q.type === "vf") return { vf: q.answer };
+    return { blanks: q.blanks.map(function (b) { return String(b.answer); }) };
+  }
+  function wrongInput(q) {
+    if (q.type === "choice") return { choice: (q.answer + 1) % q.options.length };
+    if (q.type === "vf") return { vf: !q.answer };
+    return { blanks: q.blanks.map(function () { return "0.0001"; }) };
+  }
+
+  var gradeBad = [];
+  var wrongAccepted = [];
+  var qCount = 0;
+  Levels.LEVELS.forEach(function (lv) {
+    lv.practice.forEach(function (q) {
+      qCount += 1;
+      var okRes = BB.gradeQuestion(q, correctInput(q));
+      if (!okRes.ok) gradeBad.push(lv.id + "/" + q.id + " 正确答案被判错");
+      var noRes = BB.gradeQuestion(q, wrongInput(q));
+      if (noRes.ok) wrongAccepted.push(lv.id + "/" + q.id + " 错答案被判对");
+      var blank = BB.gradeQuestion(q, {});
+      if (blank.ok) wrongAccepted.push(lv.id + "/" + q.id + " 空答案被判对");
+    });
+  });
+
+  check("所有 " + qCount + " 道题的答案判定正确", gradeBad.length === 0, gradeBad.join(" | "));
+  check("错误答案和空答案都不会被判对", wrongAccepted.length === 0, wrongAccepted.join(" | "));
+
+  /* ---------- 6. 小数写法容错：3.60 / 3.6 都算对 ---------- */
+  var tol = [
+    ["3.60 与 3.6 等价", BB.checkBlank({ answer: "3.6" }, "3.60")],
+    ["22.22 元 与 22.22 等价", BB.checkBlank({ answer: "22.22" }, "22.22 元")],
+    ["0.0072 全角小数点", BB.checkBlank({ answer: "0.0072" }, "0.0072")],
+    ["9.204 与 9.2040 等价", BB.checkBlank({ answer: "9.204" }, "9.2040")],
+  ];
+  tol.forEach(function (t) { check(t[0], !!t[1]); });
+  check("3.572 不会被当成 3.57", !BB.checkBlank({ answer: "3.572" }, "3.57"));
+
+  /* ---------- 7. 两个真实页面自己不能报错，而且要真的渲染出内容 ---------- */
+  /* 上面测的都是引擎。页面里的行内脚本（比如漏定义的变量）只有把整页
+     真跑一遍才暴露得出来，所以这里把页面放进 iframe 跑一次，
+     读它们自己记下的 window.__bbErrors。 */
+  function probe(url, opts) {
+    opts = opts || {};
+    return new Promise(function (resolve) {
+      var fr = document.createElement("iframe");
+      fr.style.cssText = "position:absolute;left:-99999px;top:0;width:1280px;height:840px;border:0";
+      fr.src = url;
+      var done = false;
+      function finish(note) {
+        if (done) return;
+        done = true;
+        var w = null;
+        try { w = fr.contentWindow; } catch (e) { w = null; }
+        var errs = [], html = "";
+        if (w) {
+          try { errs = (w.__bbErrors || []).map(function (m) { return String(m); }); } catch (e) {}
+          try { html = w.document.documentElement.outerHTML; } catch (e) {}
+        } else {
+          errs = ["iframe 打不开"];
+        }
+        resolve({ url: url, errors: errs, html: html, note: note || "" });
+      }
+      fr.addEventListener("load", function () {
+        setTimeout(function () {
+          var note = "";
+          if (opts.act) {
+            try { note = opts.act(fr.contentWindow) || ""; } catch (e) { note = "操作抛错：" + e.message; }
+          }
+          setTimeout(function () { finish(note); }, opts.settle || 800);
+        }, opts.wait || 1200);
+      });
+      setTimeout(function () { finish("超时未完成"); }, (opts.wait || 1200) + 7000);
+      document.body.appendChild(fr);
+    });
+  }
+
+  /* 阶段二要真的进得去：把讲解拉到最后一屏，点「开始闯关练习」 */
+  function enterPractice(w) {
+    if (!w) return "拿不到页面窗口";
+    var box = w.document.getElementById("practice");
+    if (box && !box.hidden) return "";
+    var btn = w.document.getElementById("startPractice");
+    if (!btn) return "没找到「开始闯关练习」按钮";
+    if (btn.style.display === "none" && typeof btn.click === "function") {
+      /* 按钮要走到最后一步才出现；用深链接已经跳到位，这里直接点 */
+    }
+    btn.click();
+    return "";
+  }
+
+  Promise.all([
+    probe("../index.html", { wait: 1500 }),
+    probe("../level.html?no=1&step=999", { wait: 1400 }),
+    probe("../level.html?no=6&step=999", { wait: 1400, act: enterPractice, settle: 1100 }),
+  ]).then(function (rs) {
+    var pageErrs = [];
+    rs.forEach(function (r) {
+      r.errors.forEach(function (m) { pageErrs.push(r.url + " → " + m); });
+      if (r.note) pageErrs.push(r.url + " → " + r.note);
+    });
+    check("两个页面跑起来都不报错", pageErrs.length === 0, pageErrs.slice(0, 5).join(" | "));
+
+    var homeHtml = (rs[0] && rs[0].html) || "";
+    var cards = (homeHtml.match(/class="bb-card/g) || []).length;
+    check("关卡地图渲染出 8 张关卡卡片", cards >= 8, "实际 " + cards + " 张");
+
+    var lvHtml = (rs[1] && rs[1].html) || "";
+    check("关卡页真的把板书画进了黑板",
+      lvHtml.indexOf("bb-op") >= 0 && lvHtml.indexOf("bb-chalk-layer") >= 0,
+      "黑板内容长度 " + lvHtml.length);
+    check("关卡页标题不是「加载中…」", lvHtml.indexOf("加载中…") < 0);
+
+    var prHtml = (rs[2] && rs[2].html) || "";
+    check("练习阶段能进去，并且出了题",
+      prHtml.indexOf("bb-qhead") >= 0 && prHtml.indexOf("bb-panel") >= 0,
+      "练习面板" + (prHtml.indexOf("bb-qhead") >= 0 ? "有" : "没有") + "题目");
+
+    emit();
+  });
+
+  /* ---------- 输出 ---------- */
+  function emit() {
+    var report = {
+      ok: fails.length === 0 && errors.length === 0,
+      pass: pass,
+      fails: fails,
+      errors: errors,
+      steps: totalSteps,
+      questions: qCount,
+      rules: ruleMetrics
+    };
+    /* marker 在这里才拼出来：源码里不出现完整的 marker 字面量，
+       否则 --dump-dom 会把脚本源码当成结果捞走。 */
+    var MARK = "BB" + "CHECK";
+    var out = document.getElementById("bb-check-out");
+    out.textContent = MARK + JSON.stringify(report) + MARK;
+    document.title = report.ok ? "BB-CHECK-PASS" : "BB-CHECK-FAIL";
+  }
+})();
+</script>
+</body>
+</html>

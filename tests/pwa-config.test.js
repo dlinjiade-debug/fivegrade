@@ -71,8 +71,7 @@ test("service worker precaches fresh release assets, removes stale versions, and
   assert.match(worker, /event\.waitUntil/);
 });
 
-test("registration only runs in supported HTTP(S) or localhost contexts", () => {
-  const client = fs.readFileSync(path.join(root, "js", "pwa.js"), "utf8");
+test("registration only runs in supported HTTP(S) or localhost contexts", () => {  const client = fs.readFileSync(path.join(root, "js", "pwa.js"), "utf8");
   assert.match(client, /navigator\.serviceWorker/);
   assert.match(client, /location\.protocol === "https:"/);
   assert.match(client, /location\.protocol === "http:"/);
@@ -85,4 +84,31 @@ test("icon is a valid SVG with a warm background and deep-purple artwork", () =>
   assert.match(icon, /<svg[\s\S]*<\/svg>/);
   assert.match(icon, /#fff8e8/i);
   assert.match(icon, /#32114f/i);
+});
+
+/* 黑板子站（blackboard/）是独立的一套 ?v=N。这里把它和主站预缓存对齐：
+   页面按 ?v=N 取资源，预缓存就必须收带版本号的键，否则离线打开会命中不到。 */
+test("blackboard sub-site keeps one version and precaches every asset it asks for", () => {
+  const pages = ["blackboard/index.html", "blackboard/level.html"];
+  const versioned = new Set();
+
+  for (const page of pages) {
+    const html = fs.readFileSync(path.join(root, page), "utf8");
+    assert.ok(/window\.__bbErrors\s*=\s*\[\]/.test(html), `${page} 缺少报错钩子`);
+    for (const m of html.matchAll(/\?v=(\d+)/g)) versioned.add(m[1]);
+  }
+  assert.equal(versioned.size, 1, `黑板子站出现了多个版本号：${[...versioned].join("、")}`);
+  const v = [...versioned][0];
+
+  for (const page of pages) {
+    const html = fs.readFileSync(path.join(root, page), "utf8");
+    /* 只管 js/css 资源：页面之间的链接（./level.html?no=1）不带版本号是正常的 */
+    const refs = [...html.matchAll(/(?:src|href)="(\.\/[^"]+\.(?:js|css)[^"]*)"/g)].map((m) => m[1]);
+    assert.ok(refs.length >= 5, `${page} 的资源引用太少（${refs.length}）`);
+    for (const ref of refs) {
+      assert.ok(ref.endsWith(`?v=${v}`), `${page} 的资源没带版本号：${ref}`);
+      const key = "./" + path.posix.join("blackboard", ref.replace(/^\.\//, ""));
+      assert.ok(PWA.PRECACHE_URLS.includes(key), `预缓存少了 ${key}`);
+    }
+  }
 });
