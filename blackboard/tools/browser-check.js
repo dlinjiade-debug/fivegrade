@@ -31,6 +31,11 @@ const SHOT = process.argv.indexOf("--no-shot") < 0;
 const OUT_DIR = path.join(ROOT, "shots");
 const IS_WIN = process.platform === "win32";
 
+/* --base=<url>：不启本地服务器，直接把同一套断言打到一个已部署的地址上。
+   本地全绿不等于线上能用（子路径、缓存、慢网络都会在线上才暴露），
+   所以上线后要拿这一趟来收口。 */
+const BASE_ARG = (process.argv.find((a) => a.startsWith("--base=")) || "").slice(7);
+
 const MIME = {
   ".html": "text/html; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
@@ -179,8 +184,15 @@ function unescapeJson(s) {
   }
   console.log("浏览器：" + browser);
 
-  const { server, port } = await serve();
-  const base = "http://127.0.0.1:" + port;
+  let server = null;
+  let base = BASE_ARG.replace(/\/+$/, "");
+  if (base) {
+    console.log("验收目标（远程）：" + base);
+  } else {
+    const local = await serve();
+    server = local.server;
+    base = "http://127.0.0.1:" + local.port;
+  }
   let failed = 0;
 
   /* ---------------- 1. 页内断言 ---------------- */
@@ -242,7 +254,7 @@ function unescapeJson(s) {
     }
   }
 
-  server.close();
+  if (server) server.close();
   console.log(failed ? "❌ 浏览器验收未通过" : "✅ 浏览器验收通过");
   process.exit(failed);
 })();

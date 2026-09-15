@@ -6,7 +6,9 @@
 
 ## 在线访问
 
-https://dlinjiade-debug.github.io/fivegrade/
+主站：https://dlinjiade-debug.github.io/fivegrade/
+
+粉笔小闯关（黑板板书）：https://dlinjiade-debug.github.io/fivegrade/blackboard/index.html
 
 ## 本地运行
 
@@ -50,3 +52,23 @@ npm run check:all             # 上面全部
 读页面自己记下的 `window.__bbErrors` —— 引擎单测抓不到「页面行内脚本漏定义变量」这类问题。
 截图输出在 `blackboard/shots/`（无头浏览器抓图等不到动画跑完，出图时强制「减少动效」，
 板书会直接静态摆好，正好是验收终态）。
+
+加了 `--base=<地址>` 就跳过本地服务器，把同一套断言打到**已部署的地址**上：
+
+```powershell
+node blackboard/tools/browser-check.js --base=https://dlinjiade-debug.github.io/fivegrade/blackboard --no-shot
+```
+
+本地全绿不等于线上能用（子路径、缓存、慢网络都只在线上才暴露），改完线上内容后应该跑这一趟收口。
+
+## 网络提醒
+
+若 `git push` 报 `Connection was reset` 或连不上 `github.com:443`，先看 DNS 把 `github.com`
+解到了哪个 IP：本项目所在网络环境下 `20.205.243.166` 不可达，而 `140.82.112~121.3` 可达。
+Git 2.43+ 可以只给 git 指定解析结果（不动系统 hosts）：
+
+```powershell
+git config --global http.curloptResolve "github.com:443:140.82.114.3"
+```
+
+撤销：`git config --global --unset http.curloptResolve`。
