@@ -6,3 +6,5 @@ tmp-*.png
 tmp/
 node_modules/
 .workbuddy/
+.qa/
+decimal-lab/
