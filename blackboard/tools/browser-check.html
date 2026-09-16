@@ -15,8 +15,11 @@
 
 <script src="../lib/handwrite.js"></script>
 <script src="../js/bb-core.js"></script>
+<script src="../js/bb-div.js"></script>
 <script src="../js/bb-chalk.js"></script>
 <script src="../js/bb-levels.js"></script>
+<script src="../js/bb-levels-div.js"></script>
+<script src="../js/bb-topics.js"></script>
 <script>
 (function () {
   "use strict";
@@ -33,14 +36,27 @@
     fails.push(name + (detail ? "  → " + detail : ""));
   }
 
-  var HW = window.HW, BB = window.BB, Chalk = window.Chalk, Levels = window.BBLevels;
+  var BB = window.BB, Chalk = window.Chalk, HW = window.HW;
   var host = document.getElementById("boardHost");
+
+  /* 两套板书共用一台引擎：乘法走 vcalc/pointjump，除法走 vdiv。
+     所有门禁都要对两套各跑一遍 —— 只测一套等于没测另一套。 */
+  var PACKS = [
+    { id: "mul", name: "小数乘法", levels: window.BBLevels, work: "vcalc" },
+    { id: "div", name: "小数除法", levels: window.BBLevelsDiv, work: "vdiv" }
+  ];
 
   /* ---------- 1. 模块与字形引擎 ---------- */
   check("BB 核心模块加载", !!BB);
   check("Chalk 引擎加载", !!Chalk);
-  check("关卡数据加载", !!Levels && Levels.LEVELS.length === 8);
   check("handwrite 字形引擎挂上了", !!(HW && typeof HW.measure === "function"));
+  check("专题登记表加载", !!window.BBTopics && window.BBTopics.TOPICS.length === 2);
+  PACKS.forEach(function (p) {
+    check(p.name + "关卡数据加载（8 关）", !!p.levels && p.levels.LEVELS.length === 8,
+      p.id + " 实际 " + (p.levels ? p.levels.LEVELS.length : "null") + " 关");
+  });
+  check("除法的展开器注册进了引擎", BB.isCompound("vdiv") && BB.isCompound("vcalc"),
+    "已注册：" + (BB.expanderKinds ? BB.expanderKinds().join("/") : "?"));
   var eng = BB.engine();
   check("bb-core 能取到字形引擎（不是退回内置宽度表）", !!(eng && typeof eng.GLYPH === "object"));
   check("字形表里有数字 0", !!(eng && eng.GLYPH && eng.GLYPH["0"]));
@@ -60,28 +76,30 @@
   var totalSteps = 0;
   var emptySteps = [];
 
-  Levels.LEVELS.forEach(function (lv) {
-    board.load(lv.steps);
-    lv.steps.forEach(function (step, si) {
-      totalSteps += 1;
-      board.goto(si, { instant: true });
-      var drawn = 0;
-      board.steps.forEach(function (s, i) {
-        if (i > si) return;
-        s.ops.forEach(function (b) {
-          if (!visibleOf(b.node)) return;
-          b.node.querySelectorAll("path,line,circle,ellipse,rect,text").forEach(function (n) { drawn += 1; });
+  PACKS.forEach(function (p) {
+    p.levels.LEVELS.forEach(function (lv) {
+      board.load(lv.steps);
+      lv.steps.forEach(function (step, si) {
+        totalSteps += 1;
+        board.goto(si, { instant: true });
+        var drawn = 0;
+        board.steps.forEach(function (s, i) {
+          if (i > si) return;
+          s.ops.forEach(function (b) {
+            if (!visibleOf(b.node)) return;
+            b.node.querySelectorAll("path,line,circle,ellipse,rect,text").forEach(function (n) { drawn += 1; });
+          });
         });
+        if (drawn === 0) emptySteps.push(p.id + "/" + lv.id + " 第" + (si + 1) + "步");
       });
-      if (drawn === 0) emptySteps.push(lv.id + " 第" + (si + 1) + "步");
     });
   });
 
   check("每一关每一步都有板书（" + totalSteps + " 步）", emptySteps.length === 0,
-    "空白的步骤：" + emptySteps.join("、"));
+    "空白的步骤：" + emptySteps.slice(0, 8).join("、"));
 
   /* ---------- 3. 中文粉笔字真的写出来了（clipPath 挂得上） ---------- */
-  board.load(Levels.LEVELS[0].steps);
+  board.load(window.BBLevels.LEVELS[0].steps);
   board.goto(0, { instant: true });
   var cnTexts = [];
   host.querySelectorAll(".bb-chalk-layer > g").forEach(function (g) {
@@ -102,35 +120,40 @@
 
   /* ---------- 4. 每一步的元素都落在黑板范围内 ---------- */
   var outOfBoard = [];
-  Levels.LEVELS.forEach(function (lv) {
-    board.load(lv.steps);
-    lv.steps.forEach(function (step, si) {
-      board.goto(si, { instant: true });
-      host.querySelectorAll(".bb-chalk-layer > g").forEach(function (g) {
-        if (!visibleOf(g)) return;
-        try {
-          var bb = g.getBBox();
-          if (bb.width === 0) return;
-          if (bb.x < -6 || bb.x + bb.width > 1286 || bb.y < -6 || bb.y + bb.height > 726) {
-            outOfBoard.push(lv.id + " 第" + (si + 1) + "步 x=" + Math.round(bb.x) +
-              " w=" + Math.round(bb.width) + " y=" + Math.round(bb.y) + " h=" + Math.round(bb.height));
-          }
-        } catch (e) { /* 未布局时跳过 */ }
+  PACKS.forEach(function (p) {
+    p.levels.LEVELS.forEach(function (lv) {
+      board.load(lv.steps);
+      lv.steps.forEach(function (step, si) {
+        board.goto(si, { instant: true });
+        host.querySelectorAll(".bb-chalk-layer > g").forEach(function (g) {
+          if (!visibleOf(g)) return;
+          try {
+            var bb = g.getBBox();
+            if (bb.width === 0) return;
+            if (bb.x < -6 || bb.x + bb.width > 1286 || bb.y < -6 || bb.y + bb.height > 726) {
+              outOfBoard.push(p.id + "/" + lv.id + " 第" + (si + 1) + "步 x=" + Math.round(bb.x) +
+                " w=" + Math.round(bb.width) + " y=" + Math.round(bb.y) + " h=" + Math.round(bb.height));
+            }
+          } catch (e) { /* 未布局时跳过 */ }
+        });
       });
     });
   });
   check("板书全都在黑板范围内", outOfBoard.length === 0, outOfBoard.slice(0, 6).join(" | "));
 
-  /* ---------- 4b. 竖式横线不许压到数字上 ----------
+  /* ---------- 5. 线与数字不许打架（上下左右都算） ----------
      横线是「几何线」，getBBox 量不到描边粗细，得自己补上半笔宽；
      数字是路径，getBBox 给的就是墨迹范围。两者一减就是真实留白。
-     这条门禁是给「横线贴着数字下沿」这种看不出来的毛病兜底的。 */
+     乘法只看「横线压到上面的数字」；除法不一样 —— 差和落位写在横线的
+     下面，所以上下两侧都要看。除号框的竖线还要看左右两侧。 */
   var NUM_STROKE = 4.6;   /* bb-chalk 里数字笔画的 stroke-width */
   var LINE_STROKE = 3.2;  /* bb-chalk 里横线的 stroke-width */
+  var MIN_CLEAR = 5;      /* 留白小于这个数就算「贴上去了」 */
   var tightLines = [];
   var minClearance = Infinity;
   var rulePairs = 0;
   var ruleWorst = "";
+  var ruleKinds = {};
 
   function inkBox(g, half) {
     var bb = g.getBBox();
@@ -138,60 +161,280 @@
     return { x1: bb.x, x2: bb.x + bb.width, y1: bb.y - half, y2: bb.y + bb.height + half };
   }
 
-  Levels.LEVELS.forEach(function (lv) {
-    board.load(lv.steps);
-    lv.steps.forEach(function (step, si) {
-      board.goto(si, { instant: true });
-      var groups = [];
-      host.querySelectorAll(".bb-chalk-layer > g").forEach(function (g) {
-        if (visibleOf(g)) groups.push(g);
-      });
-      var lines = groups.filter(function (g) { return g.classList.contains("bb-op-line"); });
-      var nums = groups.filter(function (g) { return g.classList.contains("bb-op-num"); });
-      lines.forEach(function (ln) {
-        var le = ln.querySelector("line");
-        if (!le) return;
-        var ly = parseFloat(le.getAttribute("y1"));
-        var lx1 = Math.min(parseFloat(le.getAttribute("x1")), parseFloat(le.getAttribute("x2")));
-        var lx2 = Math.max(parseFloat(le.getAttribute("x1")), parseFloat(le.getAttribute("x2")));
-        var lineTop = ly - LINE_STROKE / 2;
-        nums.forEach(function (ng) {
-          var nb = inkBox(ng, NUM_STROKE / 2);
-          if (!nb) return;
-          /* 只看横线正上方、且在横线水平范围内的那一行数字 */
-          if (nb.x2 < lx1 || nb.x1 > lx2) return;
-          if (nb.y2 > ly) return;
-          var gap = lineTop - nb.y2;
-          rulePairs += 1;
-          if (gap < minClearance) {
-            minClearance = gap;
-            /* 把最紧那一对的原始数字留档：万一 getBBox 哪天返回的是
-               字形本地坐标（0~52 那一套），这几个数会立刻露馅。 */
-            ruleWorst = lv.id + " 第" + (si + 1) + "步 「" +
-              (ng.getAttribute("data-text") || "?") + "」墨迹底 " + nb.y2.toFixed(1) +
-              "，横线 " + ly.toFixed(1) + "（水平范围 " + Math.round(lx1) + "~" + Math.round(lx2) + "）";
-          }
-          if (gap < 5) {
-            tightLines.push(lv.id + " 第" + (si + 1) + "步 横线离数字只有 " +
-              gap.toFixed(1) + "px（" + (ng.getAttribute("data-text") || "数字") + "）");
-          }
+  /* 一条线：横向还是纵向，以及它实际盖住的那一段 */
+  function lineGeom(g) {
+    var le = g.querySelector("line");
+    if (!le) return null;
+    var x1 = parseFloat(le.getAttribute("x1")), y1 = parseFloat(le.getAttribute("y1"));
+    var x2 = parseFloat(le.getAttribute("x2")), y2 = parseFloat(le.getAttribute("y2"));
+    if (!(x1 === x1) || !(y1 === y1)) return null;          /* NaN 跳过 */
+    if (x1 === x2 && y1 === y2) return null;
+    return {
+      vertical: x1 === x2,
+      x1: Math.min(x1, x2), x2: Math.max(x1, x2),
+      y1: Math.min(y1, y2), y2: Math.max(y1, y2),
+    };
+  }
+
+  function clearance(line, nb) {
+    var half = LINE_STROKE / 2;
+    if (line.vertical) {
+      /* 竖线：数字必须在它的左或右，比的是横向留白 */
+      if (nb.y2 <= line.y1 || nb.y1 >= line.y2) return null;   /* 纵向不重叠就不算 */
+      if (nb.x2 <= line.x1) return (line.x1 - half) - nb.x2;
+      if (nb.x1 >= line.x2) return nb.x1 - (line.x2 + half);
+      return -1;                                               /* 压在线上了 */
+    }
+    if (nb.x2 <= line.x1 || nb.x1 >= line.x2) return null;      /* 横向不重叠就不算 */
+    if (nb.y2 <= line.y1) return (line.y1 - half) - nb.y2;      /* 数字在线上面 */
+    if (nb.y1 >= line.y2) return nb.y1 - (line.y2 + half);      /* 数字在线下面 */
+    return -1;                                                  /* 压在线上了 */
+  }
+
+  PACKS.forEach(function (p) {
+    p.levels.LEVELS.forEach(function (lv) {
+      board.load(lv.steps);
+      lv.steps.forEach(function (step, si) {
+        board.goto(si, { instant: true });
+        var groups = [];
+        host.querySelectorAll(".bb-chalk-layer > g").forEach(function (g) {
+          if (visibleOf(g)) groups.push(g);
+        });
+        var lines = groups.filter(function (g) { return g.classList.contains("bb-op-line"); });
+        var nums = groups.filter(function (g) { return g.classList.contains("bb-op-num"); });
+        lines.forEach(function (lg) {
+          var line = lineGeom(lg);
+          if (!line) return;
+          nums.forEach(function (ng) {
+            var nb = inkBox(ng, NUM_STROKE / 2);
+            if (!nb) return;
+            var gap = clearance(line, nb);
+            if (gap == null) return;
+            var kind = line.vertical ? "竖线" : (nb.y1 >= line.y2 ? "线下的数字" : "线上的数字");
+            rulePairs += 1;
+            ruleKinds[kind] = (ruleKinds[kind] || 0) + 1;
+            if (gap < minClearance) {
+              minClearance = gap;
+              ruleWorst = p.id + "/" + lv.id + " 第" + (si + 1) + "步 " + kind + "「" +
+                (ng.getAttribute("data-text") || "?") + "」墨迹 " +
+                (nb.y1 >= line.y2 ? "顶 " + nb.y1.toFixed(1) : "底 " + nb.y2.toFixed(1)) +
+                "，线 " + (line.vertical ? "x=" + line.x1.toFixed(1) + "（纵向 " +
+                Math.round(line.y1) + "~" + Math.round(line.y2) + "）"
+                  : "y=" + line.y1.toFixed(1) + "（横向 " +
+                    Math.round(line.x1) + "~" + Math.round(line.x2) + "）");
+            }
+            if (gap < MIN_CLEAR) {
+              tightLines.push(p.id + "/" + lv.id + " 第" + (si + 1) + "步 " + kind +
+                "只剩 " + gap.toFixed(1) + "px（" + (ng.getAttribute("data-text") || "数字") + "）");
+            }
+          });
         });
       });
     });
   });
 
-  check("竖式横线没有压到数字上（全 8 关最紧处留白 " +
-    (minClearance === Infinity ? "n/a" : minClearance.toFixed(1) + "px") + "）",
+  check("线和数字没有互相压住（全 16 关最紧处留白 " +
+    (minClearance === Infinity ? "n/a" : minClearance.toFixed(1) + "px）"),
     tightLines.length === 0, tightLines.slice(0, 6).join(" | "));
 
-  /* 这条门禁必须能证明自己量到了东西：量到的「横线—数字」对数
+  /* 这条门禁必须能证明自己量到了东西：量到的「线—数字」对数
      和最小留白一起报出来，免得 getBBox 悄悄返回空值让它空转。 */
-  var ruleMetrics = { pairs: rulePairs, minClearance: minClearance === Infinity ? null : +minClearance.toFixed(1), worst: ruleWorst };
-  check("这条门禁真的量到了横线（" + rulePairs + " 对），不是空转",
-    rulePairs >= 8 && minClearance < 200,      /* 200 是哨兵：真量到板面坐标不会这么夸张 */
+  var ruleMetrics = {
+    pairs: rulePairs,
+    minClearance: minClearance === Infinity ? null : +minClearance.toFixed(1),
+    worst: ruleWorst,
+    kinds: ruleKinds,
+  };
+  check("这条门禁真的量到了线（" + rulePairs + " 对），不是空转",
+    rulePairs >= 16 && minClearance < 200,      /* 200 是哨兵：真量到板面坐标不会这么夸张 */
     "只量到 " + rulePairs + " 对，或坐标不在板面空间。最紧的一对：" + ruleWorst);
+  check("除法竖式里「横线下面的数字」也被量到了（差 / 落位）",
+    (ruleKinds["线下的数字"] || 0) >= 10,
+    "只量到 " + (ruleKinds["线下的数字"] || 0) + " 对。分布：" + JSON.stringify(ruleKinds));
 
-  /* ---------- 5. 答案判定：正确答案要判对，错的要判错 ---------- */
+  /* ---------- 6. 除法竖式的几何：该写的写全了，位置也放在对的那一列 ----------
+     前面的门禁只能证明「没打架」。除法的错法里最要命的是「位置对错」：
+     商写到隔壁列、乘积没贴着商那一位、该点的点忘了点 —— 这类错都不压线，
+     只能把「这一步该写什么」和「板上真的写了什么」两边摆一起比。
+
+     注意：讲解是一段一段写的（head → st0 → st1 → qdot/res），
+     所以每一步只用它自己的 only 去要求它 —— 拿整块板书去要求半截的步骤，
+     会误报「少了小数点」这种假问题。整块板书的完整性用不带 only 的展开来查。 */
+  var alignBad = [];
+  var alignPairs = 0;
+  var fillBad = [];
+  var fillPairs = 0;
+  var DivPack = null;
+  PACKS.forEach(function (p) { if (p.id === "div") DivPack = p; });
+
+  /* 一个 num 笔画里每个字形「落在哪一格」。渲染时每个字形是一个
+     translate(x,y) scale(s) 的 <g>，x 就是排版算出来的格子左边 —— 
+     拿它比坐标，比量墨迹稳（墨迹宽度随字形变，格子宽度不随）。 */
+  function glyphCells(g) {
+    var out = [];
+    for (var i = 0; i < g.children.length; i += 1) {
+      var kid = g.children[i];
+      var tr = kid.getAttribute ? (kid.getAttribute("transform") || "") : "";
+      var m = /translate\(\s*([-\d.]+)[\s,]+([-\d.]+)\s*\)/.exec(tr);
+      out.push(m ? { x: parseFloat(m[1]), y: parseFloat(m[2]) } : null);
+    }
+    return out;
+  }
+
+  /* 这一步自己写出来的笔画（按 data-tag 索引）。
+     只认本步的节点，不带上前几步 keep 下来、也不带上上一道题 —— 
+     否则比的是别人的坐标，等于没比。 */
+  function stepTagsOf(si) {
+    var map = {};
+    var built = (board.steps[si] && board.steps[si].ops) || [];
+    built.forEach(function (b) {
+      if (!b.node || !visibleOf(b.node)) return;
+      var t = b.node.getAttribute("data-tag");
+      if (t) (map[t] = map[t] || []).push(b.node);
+    });
+    return map;
+  }
+
+  if (DivPack) {
+    DivPack.levels.LEVELS.forEach(function (lv) {
+      board.load(lv.steps);
+      lv.steps.forEach(function (step, si) {
+        var specs = (step.ops || []).filter(function (o) { return o.k === "vdiv"; });
+        if (!specs.length) return;
+        board.goto(si, { instant: true });
+        var wrote = stepTagsOf(si);
+        specs.forEach(function (op) {
+          var spec = op.spec || {};
+          var shown;
+          try { shown = BB.expandVdiv(spec); }
+          catch (e) { alignBad.push(lv.id + " 第" + (si + 1) + "步 竖式展开失败：" + e.message); return; }
+
+          /* 不带 only 的整块板书：一个题目的商、结果、循环点都在这里 */
+          var wholeSpec = {};
+          Object.keys(spec).forEach(function (k) { if (k !== "only") wholeSpec[k] = spec[k]; });
+          var whole = shown;
+          try { whole = BB.expandVdiv(wholeSpec); } catch (e) { /* 退回本步那份 */ }
+
+          var m = whole.math;
+          var size = whole.size;
+          var colW = whole.colW;
+          var scale = size / BB.GLYPH_BOX;
+          var cellLeft = function (col) { return whole.x0 + (col - 1) * colW; };
+          var where = lv.id + " 第" + (si + 1) + "步";
+
+          /* 6a. 这一步声明的每一笔，板上都得真的有 —— 漏写是最难发现的错 */
+          shown.ops.forEach(function (o) {
+            fillPairs += 1;
+            if (!(wrote[o.tag] && wrote[o.tag].length)) {
+              fillBad.push(where + " 少了「" + o.tag + "」（这一步声明要写，板上没写）");
+            }
+          });
+
+          /* 6b. 商的一位必须落在被除数对应那一列的正上方 */
+          shown.ops.forEach(function (o) {
+            var hit = /^st(\d+)-q$/.exec(o.tag || "");
+            if (!hit) return;
+            var k = Number(hit[1]);
+            var st = m.kept[k];
+            var g = (wrote[o.tag] || [])[0];
+            if (!st || !g) return;
+            var cells = glyphCells(g);
+            if (!cells[0]) return;
+            var ch = (o.layout && o.layout[0] && o.layout[0].ch) || String(st.q);
+            var got = cells[0].x + BB.advanceOf(ch) * scale / 2;
+            var expect = cellLeft(st.col) + colW / 2;
+            alignPairs += 1;
+            if (Math.abs(got - expect) > 1.5) {
+              alignBad.push(where + " 商「" + st.q + "」的格子中心 " + got.toFixed(1) +
+                "，该在第 " + st.col + " 列（中心 " + expect.toFixed(1) + "）");
+            }
+            /* 墨迹也不能跑到隔壁列去 */
+            var qb = g.getBBox();
+            if (qb.width > 0 && (qb.x < cellLeft(st.col) - colW * 0.3 ||
+              qb.x + qb.width > cellLeft(st.col + 1) + colW * 0.3)) {
+              alignBad.push(where + " 商「" + st.q + "」的笔迹跑出了第 " + st.col + " 列");
+            }
+          });
+
+          /* 6c. 乘积的末位要压在商这一位的正下方（同一列） */
+          shown.ops.forEach(function (o) {
+            var hit = /^st(\d+)-p$/.exec(o.tag || "");
+            if (!hit) return;
+            var k = Number(hit[1]);
+            var st = m.kept[k];
+            var g = (wrote[o.tag] || [])[0];
+            if (!st || !g || !o.layout || !o.layout.length) return;
+            var cells = glyphCells(g);
+            var last = null;
+            for (var i = cells.length - 1; i >= 0; i -= 1) { if (cells[i]) { last = cells[i]; break; } }
+            if (!last) return;
+            var ch = o.layout[o.layout.length - 1].ch;
+            var got = last.x + BB.advanceOf(ch) * scale / 2;
+            var expect = cellLeft(st.col) + colW / 2;
+            if (Math.abs(got - expect) > 1.5) {
+              alignBad.push(where + " 乘积「" + o.text + "」的末位中心 " + got.toFixed(1) +
+                "，该和商「" + st.q + "」同在第 " + st.col + " 列（中心 " +
+                expect.toFixed(1) + "）");
+            }
+          });
+
+          /* 6d. 小数点 / 结果 / 循环点：按整块板书核对，除得尽「＝」、除不尽「≈」 */
+          var allTags = whole.ops.map(function (o) { return o.tag; });
+          var has = function (t) { return allTags.indexOf(t) >= 0; };
+          if (m.hasPoint !== has("qdot")) {
+            alignBad.push(where + " 商的小数点" + (m.hasPoint ? "该发没发" : "不该发却发了") +
+              "（商 " + m.value + "）");
+          }
+          if (!!m.cycle !== has("repeat")) {
+            alignBad.push(where + " 循环点" + (m.cycle ? "该标没标" : "不该标却标了") +
+              "（商 " + m.value + "）");
+          }
+          var resOp = whole.ops.filter(function (o) { return o.tag === "res"; })[0];
+          if (!resOp) {
+            alignBad.push(where + " 整块板书里没有结果（res）");
+          } else {
+            var wantSym = m.exact ? "= " : "≈ ";
+            if (resOp.text.indexOf(wantSym) !== 0) {
+              alignBad.push(where + " 结果符号写错了：「" + resOp.text + "」，应以「" +
+                wantSym + "」开头（余数 " + m.remainder + "）");
+            }
+            /* 除得尽：板上必须是完整的商；除不尽：板上必须是商四舍五入到原位数的值。
+               直接比字符串会把「≈ 1.62」误判成和「1.616」不一致 —— 它本来就该不一样。 */
+            var shownNum = resOp.text.replace(/^[=≈]\s*/, "");
+            if (m.exact) {
+              if (shownNum !== m.value) {
+                alignBad.push(where + " 板面结果「" + resOp.text + "」与算出来的商「" +
+                  m.value + "」不一致");
+              }
+            } else {
+              var dp = (shownNum.split(".")[1] || "").length;
+              var diff = Math.abs(Number(shownNum) - Number(m.value));
+              if (!(diff <= 0.5 * Math.pow(10, -dp) + 1e-9)) {
+                alignBad.push(where + " 板面结果「" + resOp.text + "」不是商「" + m.value +
+                  "」四舍五入到 " + dp + " 位的值（差了 " + diff.toFixed(6) + "）");
+              }
+            }
+          }
+          /* 用了 only 的步骤，写出来的必须真的都是它声明的那几笔 */
+          var intend = {};
+          shown.ops.forEach(function (o) { intend[o.tag] = 1; });
+          Object.keys(wrote).forEach(function (t) {
+            if (t.indexOf("st") !== 0 && ["bracket", "divisor", "dividend", "qdot", "repeat", "res"].indexOf(t) < 0) return;
+            if (!intend[t]) {
+              alignBad.push(where + " 多写了「" + t + "」（这一步没声明写它）");
+            }
+          });
+        });
+      });
+    });
+  }
+
+  check("除法每一步「声明要写」的笔画都写在了板上（查了 " + fillPairs + " 笔）",
+    fillBad.length === 0, fillBad.slice(0, 6).join(" | "));
+  check("除法的商与乘积都压在对应的那一列上（比了 " + alignPairs + " 处）",
+    alignBad.length === 0, alignBad.slice(0, 6).join(" | "));
+
+  /* ---------- 7. 答案判定：正确答案要判对，错的要判错 ---------- */
   function correctInput(q) {
     if (q.type === "choice") return { choice: q.answer };
     if (q.type === "vf") return { vf: q.answer };
@@ -206,32 +449,41 @@
   var gradeBad = [];
   var wrongAccepted = [];
   var qCount = 0;
-  Levels.LEVELS.forEach(function (lv) {
-    lv.practice.forEach(function (q) {
-      qCount += 1;
-      var okRes = BB.gradeQuestion(q, correctInput(q));
-      if (!okRes.ok) gradeBad.push(lv.id + "/" + q.id + " 正确答案被判错");
-      var noRes = BB.gradeQuestion(q, wrongInput(q));
-      if (noRes.ok) wrongAccepted.push(lv.id + "/" + q.id + " 错答案被判对");
-      var blank = BB.gradeQuestion(q, {});
-      if (blank.ok) wrongAccepted.push(lv.id + "/" + q.id + " 空答案被判对");
+  var qByPack = {};
+  PACKS.forEach(function (p) {
+    var n = 0;
+    p.levels.LEVELS.forEach(function (lv) {
+      lv.practice.forEach(function (q) {
+        qCount += 1; n += 1;
+        var okRes = BB.gradeQuestion(q, correctInput(q));
+        if (!okRes.ok) gradeBad.push(p.id + "/" + lv.id + "/" + q.id + " 正确答案被判错");
+        var noRes = BB.gradeQuestion(q, wrongInput(q));
+        if (noRes.ok) wrongAccepted.push(p.id + "/" + lv.id + "/" + q.id + " 错答案被判对");
+        var blank = BB.gradeQuestion(q, {});
+        if (blank.ok) wrongAccepted.push(p.id + "/" + lv.id + "/" + q.id + " 空答案被判对");
+      });
     });
+    qByPack[p.id] = n;
   });
 
-  check("所有 " + qCount + " 道题的答案判定正确", gradeBad.length === 0, gradeBad.join(" | "));
-  check("错误答案和空答案都不会被判对", wrongAccepted.length === 0, wrongAccepted.join(" | "));
+  check("所有 " + qCount + " 道题的答案判定正确" +
+    "（乘法 " + qByPack.mul + " / 除法 " + qByPack.div + "）",
+    gradeBad.length === 0, gradeBad.slice(0, 6).join(" | "));
+  check("错误答案和空答案都不会被判对", wrongAccepted.length === 0, wrongAccepted.slice(0, 6).join(" | "));
 
-  /* ---------- 6. 小数写法容错：3.60 / 3.6 都算对 ---------- */
+  /* ---------- 8. 小数写法容错：3.60 / 3.6 都算对 ---------- */
   var tol = [
     ["3.60 与 3.6 等价", BB.checkBlank({ answer: "3.6" }, "3.60")],
     ["22.22 元 与 22.22 等价", BB.checkBlank({ answer: "22.22" }, "22.22 元")],
     ["0.0072 全角小数点", BB.checkBlank({ answer: "0.0072" }, "0.0072")],
     ["9.204 与 9.2040 等价", BB.checkBlank({ answer: "9.204" }, "9.2040")],
+    ["1.25 后面跟了单位", BB.checkBlank({ answer: "1.25" }, "1.25 米")],
   ];
   tol.forEach(function (t) { check(t[0], !!t[1]); });
   check("3.572 不会被当成 3.57", !BB.checkBlank({ answer: "3.572" }, "3.57"));
+  check("0.15 与 .15 都算对", !!BB.checkBlank({ answer: "0.15" }, ".15"));
 
-  /* ---------- 7. 两个真实页面自己不能报错，而且要真的渲染出内容 ---------- */
+  /* ---------- 9. 两个专题的真实页面都不能报错，而且要真的渲染出内容 ---------- */
   /* 上面测的都是引擎。页面里的行内脚本（比如漏定义的变量）只有把整页
      真跑一遍才暴露得出来，所以这里把页面放进 iframe 跑一次，
      读它们自己记下的 window.__bbErrors。 */
@@ -277,39 +529,64 @@
     if (box && !box.hidden) return "";
     var btn = w.document.getElementById("startPractice");
     if (!btn) return "没找到「开始闯关练习」按钮";
-    if (btn.style.display === "none" && typeof btn.click === "function") {
-      /* 按钮要走到最后一步才出现；用深链接已经跳到位，这里直接点 */
-    }
     btn.click();
     return "";
   }
 
   Promise.all([
-    probe("../index.html", { wait: 1500 }),
-    probe("../level.html?no=1&step=999", { wait: 1400 }),
-    probe("../level.html?no=6&step=999", { wait: 1400, act: enterPractice, settle: 1100 }),
+    probe("../index.html?topic=mul", { wait: 1500 }),
+    probe("../level.html?topic=mul&no=1&step=999", { wait: 1400 }),
+    probe("../level.html?topic=mul&no=6&step=999", { wait: 1400, act: enterPractice, settle: 1100 }),
+    probe("../index.html?topic=div", { wait: 1500 }),
+    probe("../level.html?topic=div&no=1&step=999", { wait: 1400 }),
+    probe("../level.html?topic=div&no=6&step=999", { wait: 1400, act: enterPractice, settle: 1100 }),
+    probe("../level.html?topic=div&no=4&step=999", { wait: 1400 }),
   ]).then(function (rs) {
     var pageErrs = [];
     rs.forEach(function (r) {
       r.errors.forEach(function (m) { pageErrs.push(r.url + " → " + m); });
       if (r.note) pageErrs.push(r.url + " → " + r.note);
     });
-    check("两个页面跑起来都不报错", pageErrs.length === 0, pageErrs.slice(0, 5).join(" | "));
+    check("两个专题的页面跑起来都不报错", pageErrs.length === 0, pageErrs.slice(0, 5).join(" | "));
 
-    var homeHtml = (rs[0] && rs[0].html) || "";
-    var cards = (homeHtml.match(/class="bb-card/g) || []).length;
-    check("关卡地图渲染出 8 张关卡卡片", cards >= 8, "实际 " + cards + " 张");
+    var homeOut = (rs[0] && rs[0].html) || "";
+    var homeDiv = (rs[3] && rs[3].html) || "";
+    check("乘法地图渲染出 8 张关卡卡片", (homeOut.match(/class="bb-card/g) || []).length >= 8,
+      "实际 " + (homeOut.match(/class="bb-card/g) || []).length + " 张");
+    check("除法地图渲染出 8 张关卡卡片", (homeDiv.match(/class="bb-card/g) || []).length >= 8,
+      "实际 " + (homeDiv.match(/class="bb-card/g) || []).length + " 张");
+    check("地图上有「乘法 / 除法」切换标签",
+      homeDiv.indexOf("bb-tab") >= 0 && homeDiv.indexOf("小数除法") >= 0);
+    check("切到除法后标题也跟着换了",
+      homeDiv.indexOf("小数除法") >= 0 && homeDiv.indexOf("小数乘法 · 八关") < 0,
+      "标题里还留着乘法的开场白");
+    check("地图要点渲染出三张卡片（两条要点 + 怎么操作）",
+      (homeDiv.match(/bb-note/g) || []).length >= 3,
+      "实际 " + (homeDiv.match(/bb-note/g) || []).length + " 张");
 
-    var lvHtml = (rs[1] && rs[1].html) || "";
-    check("关卡页真的把板书画进了黑板",
-      lvHtml.indexOf("bb-op") >= 0 && lvHtml.indexOf("bb-chalk-layer") >= 0,
-      "黑板内容长度 " + lvHtml.length);
-    check("关卡页标题不是「加载中…」", lvHtml.indexOf("加载中…") < 0);
+    [1, 4].forEach(function (idx) {
+      var lvHtml = (rs[idx] && rs[idx].html) || "";
+      var tag = idx === 1 ? "乘法" : "除法";
+      check(tag + "关卡页真的把板书画进了黑板",
+        lvHtml.indexOf("bb-op") >= 0 && lvHtml.indexOf("bb-chalk-layer") >= 0,
+        "黑板内容长度 " + lvHtml.length);
+      check(tag + "关卡页标题不是「加载中…」", lvHtml.indexOf("加载中…") < 0);
+    });
+    check("除法关卡页真的画出了除号框（bracket）",
+      ((rs[4] && rs[4].html) || "").indexOf('data-tag="bracket"') >= 0);
+    check("除法关卡页画出了商与被除数",
+      ((rs[4] && rs[4].html) || "").indexOf('data-tag="dividend"') >= 0 &&
+      /data-tag="st\d+-q"/.test(((rs[4] && rs[4].html) || "")));
+    check("循环小数那一关板上标了循环点",
+      ((rs[5] && rs[5].html) || "").indexOf('data-tag="repeat"') >= 0);
 
-    var prHtml = (rs[2] && rs[2].html) || "";
-    check("练习阶段能进去，并且出了题",
-      prHtml.indexOf("bb-qhead") >= 0 && prHtml.indexOf("bb-panel") >= 0,
-      "练习面板" + (prHtml.indexOf("bb-qhead") >= 0 ? "有" : "没有") + "题目");
+    [2, 5].forEach(function (idx) {
+      var prHtml = (rs[idx] && rs[idx].html) || "";
+      var tag = idx === 2 ? "乘法" : "除法";
+      check(tag + "练习阶段能进去，并且出了题",
+        prHtml.indexOf("bb-qhead") >= 0 && prHtml.indexOf("bb-panel") >= 0,
+        "练习面板" + (prHtml.indexOf("bb-qhead") >= 0 ? "有" : "没有") + "题目");
+    });
 
     emit();
   });
@@ -323,7 +600,8 @@
       errors: errors,
       steps: totalSteps,
       questions: qCount,
-      rules: ruleMetrics
+      rules: ruleMetrics,
+      align: { pairs: alignPairs, bad: alignBad.length, fill: fillPairs, missing: fillBad.length }
     };
     /* marker 在这里才拼出来：源码里不出现完整的 marker 字面量，
        否则 --dump-dom 会把脚本源码当成结果捞走。 */

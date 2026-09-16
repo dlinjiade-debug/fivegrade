@@ -164,6 +164,16 @@ test("答案判定：小数写法宽容，3.60 与 3.6 一样", () => {
   assert.ok(!BB.checkBlank({ answer: "8" }, ""));
 });
 
+test("答案判定：只打「.15」也认（小孩常漏掉整数位的 0）", () => {
+  assert.ok(BB.checkBlank({ answer: "0.15" }, ".15"));
+  assert.ok(BB.checkBlank({ answer: "0.15" }, " .15 "));
+  assert.ok(BB.checkBlank({ answer: "0.048" }, ".048"));
+  assert.ok(BB.checkBlank({ answer: "1.5" }, "1.5"), "本来就写全的不能受影响");
+  /* 不能因为补 0 就把「15」这种真错答成对 */
+  assert.ok(!BB.checkBlank({ answer: "0.15" }, "15"));
+  assert.ok(!BB.checkBlank({ answer: "0.3" }, ".03"), "0.03 不是 0.3");
+});
+
 test("答案判定：选择题 / 判断题 / 填空题", () => {
   const q = { type: "choice", options: ["a", "b", "c"], answer: 2 };
   assert.equal(BB.gradeQuestion(q, { choice: 2 }).ok, true);

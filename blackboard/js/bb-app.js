@@ -11,21 +11,37 @@
   "use strict";
 
   const BB = root.BB;
-  const Levels = root.BBLevels;
   const Chalk = root.Chalk;
+  const Topics = root.BBTopics;
 
   if (root.HW && BB && BB.setGlyphEngine) BB.setGlyphEngine(root.HW);
+
+  /* ---------------- 当前专题（乘法 / 除法） ----------------
+     关卡包由 bb-topics.js 决定。这里做成一个门面，页面其余地方照旧写
+     Levels.LEVELS / Levels.levelByNo，一个字都不用改。 */
+  let TOPIC = Topics ? Topics.current() : null;
+  const Levels = {
+    get LEVELS() { return TOPIC && TOPIC.levels ? TOPIC.levels.LEVELS : []; },
+    levelById: function (id) {
+      return Levels.LEVELS.filter(function (l) { return l.id === id; })[0] || null;
+    },
+    levelByNo: function (no) { return Levels.LEVELS[Number(no) - 1] || null; },
+  };
 
   const App = {};
 
   /* ================================================================== *
-   *  1. 进度存档
+   *  1. 进度存档（按专题分开存）
    * ================================================================== */
-  const STORE_KEY = "bb-progress-v1";
+  /* 学乘法留下的章，不该出现在除法的地图上。乘法的键保持老名字，
+     这样老用户之前闯过的关不会丢。 */
+  function storeKey() {
+    return TOPIC && TOPIC.id === "div" ? "bb-progress-v1-div" : "bb-progress-v1";
+  }
 
   function readProgress() {
     try {
-      const raw = root.localStorage && root.localStorage.getItem(STORE_KEY);
+      const raw = root.localStorage && root.localStorage.getItem(storeKey());
       const data = raw ? JSON.parse(raw) : null;
       return data && typeof data === "object" ? data : {};
     } catch (e) {
@@ -35,7 +51,7 @@
 
   function writeProgress(data) {
     try {
-      if (root.localStorage) root.localStorage.setItem(STORE_KEY, JSON.stringify(data));
+      if (root.localStorage) root.localStorage.setItem(storeKey(), JSON.stringify(data));
     } catch (e) { /* 隐私模式下写不进去，不影响使用 */ }
   }
 
@@ -48,7 +64,7 @@
 
   function clearProgress() {
     try {
-      if (root.localStorage) root.localStorage.removeItem(STORE_KEY);
+      if (root.localStorage) root.localStorage.removeItem(storeKey());
     } catch (e) { /* 同上 */ }
   }
 
@@ -76,6 +92,64 @@
     return m ? decodeURIComponent(m[1].replace(/\+/g, " ")) : null;
   }
 
+  /* 站内跳转一律把专题写进地址。
+     光靠 localStorage 记「上次看的是哪个专题」不够稳：同时开两个标签页时，
+     最后加载的那一页会把值改掉，另一页点卡片就串到别的专题去了。
+     带上 ?topic= 之后，链接也变成了可以单独发出去的地址（老师发某一关很方便）。 */
+  function topicId() { return TOPIC ? TOPIC.id : "mul"; }
+  function levelUrl(no) { return "./level.html?topic=" + topicId() + "&no=" + no; }
+  function mapUrl() { return "./index.html?topic=" + topicId(); }
+
+  /* ================================================================== *
+   *  1.5 专题切换（乘法 / 除法）
+   * ================================================================== */
+  App.topic = function () { return TOPIC; };
+
+  /** 页头的两个专题按钮：换专题不换页面，学到第几关就带到第几关 */
+  App.renderTopicSwitch = function () {
+    const host = document.getElementById("topicSwitch");
+    if (!host || !Topics) return;
+    const no = param("no");
+    host.innerHTML = "";
+    Topics.TOPICS.forEach(function (t) {
+      const on = TOPIC && t.id === TOPIC.id;
+      const a = el("a", "bb-tab" + (on ? " on" : ""), t.name);
+      a.href = Topics.switchUrl(t.id, no);
+      if (on) a.setAttribute("aria-current", "true");
+      a.addEventListener("click", function () { Topics.remember(t.id); });
+      host.appendChild(a);
+    });
+  };
+
+  /** 标题、副标题、页脚、底部三张说明卡，全部跟着专题走 */
+  App.renderTopicBits = function () {
+    if (!TOPIC) return;
+    document.title = TOPIC.docTitle;
+
+    const sub = document.getElementById("brandSub");
+    if (sub) sub.textContent = TOPIC.brand;
+    const chip = document.getElementById("brandChip");
+    if (chip) chip.textContent = TOPIC.chip;
+    const foot = document.getElementById("pageFoot");
+    if (foot) foot.textContent = TOPIC.foot;
+    const desc = document.querySelector('meta[name="description"]');
+    if (desc) desc.setAttribute("content", TOPIC.desc);
+
+    const sum = document.getElementById("mapSummary");
+    if (sum && Topics) {
+      sum.innerHTML = "";
+      Topics.notes(TOPIC).forEach(function (n) {
+        const box = el("div", "bb-note");
+        box.appendChild(el("h4", null, n.title));
+        const ul = el("ul");
+        n.items.forEach(function (t) { ul.appendChild(el("li", null, t)); });
+        box.appendChild(ul);
+        sum.appendChild(box);
+      });
+    }
+    App.renderTopicSwitch();
+  };
+
   /* ================================================================== *
    *  2. 关卡地图
    * ================================================================== */
@@ -93,7 +167,7 @@
     if (resume) {
       const no = nextLevelNo(all);
       resume.textContent = doneCount === 0 ? "从第 1 关开始" : "继续第 " + no + " 关";
-      resume.setAttribute("href", "./level.html?no=" + no);
+      resume.setAttribute("href", levelUrl(no));
     }
 
     if (!grid) return;
@@ -103,7 +177,7 @@
       const done = isDone(all, lv.id);
       const rec = all[lv.id] || {};
       const card = el("a", "bb-card" + (done ? " done" : ""));
-      card.href = "./level.html?no=" + lv.no;
+      card.href = levelUrl(lv.no);
 
       card.appendChild(el("div", "bb-card-no", "第 " + lv.no + " 关"));
       card.appendChild(el("h3", null, lv.title));
@@ -148,7 +222,7 @@
     const host = document.getElementById("boardHost");
     if (!host) return;
     if (!level) {
-      host.innerHTML = "<p style='padding:40px'>找不到这一关，<a href='./index.html'>回到关卡地图</a>。</p>";
+      host.innerHTML = "<p style='padding:40px'>找不到这一关，<a href='" + mapUrl() + "'>回到关卡地图</a>。</p>";
       return;
     }
 
@@ -578,7 +652,7 @@
       } else if (level.no < Levels.LEVELS.length) {
         box.appendChild(el("p", null, "下一关：第 " + (level.no + 1) + " 关 " + Levels.LEVELS[level.no].title + "。"));
       } else {
-        box.appendChild(el("p", null, "八关全部通关，小数的乘法你已经拿下啦！"));
+        box.appendChild(el("p", null, "八关全部通关，" + (TOPIC ? TOPIC.name : "小数") + " 你已经拿下啦！"));
       }
 
       const acts = el("div", "bb-acts");
@@ -598,11 +672,11 @@
 
       if (level.no < Levels.LEVELS.length) {
         const nx = el("a", "bb-btn primary", "进入第 " + (level.no + 1) + " 关");
-        nx.href = "./level.html?no=" + (level.no + 1);
+        nx.href = levelUrl(level.no + 1);
         acts.appendChild(nx);
       } else {
         const mp = el("a", "bb-btn primary", "回到关卡地图");
-        mp.href = "./index.html";
+        mp.href = mapUrl();
         acts.appendChild(mp);
       }
       box.appendChild(acts);

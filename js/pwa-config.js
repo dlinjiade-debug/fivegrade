@@ -16,16 +16,19 @@
       "./js/labs-arithmetic.js", "./js/labs-geometry.js", "./js/home.js", "./js/handout.js", "./js/pwa.js", "./js/pwa-config.js",
       "./data/handout-content.json",
       "./output/pdf/五年级数学知识点精华讲义.pdf",
-      /* 粉笔小闯关子站：黑板板书 + 八关练习，离线也要能用。
-         页面是按 ?v=2 取资源的，所以带版本号的键也要一起收，
+      /* 粉笔小闯关子站：黑板板书 + 八关练习（乘法 / 除法两个专题共用同一套引擎）。
+         页面是按 ?v=5 取资源的，所以带版本号的键也要一起收，
          否则离线打开会命中不到缓存。子站升版时这里跟着改。 */
       "./blackboard/index.html", "./blackboard/level.html",
-      "./blackboard/css/blackboard.css", "./blackboard/css/blackboard.css?v=4",
-      "./blackboard/lib/handwrite.js", "./blackboard/lib/handwrite.js?v=4",
-      "./blackboard/js/bb-core.js", "./blackboard/js/bb-core.js?v=4",
-      "./blackboard/js/bb-chalk.js", "./blackboard/js/bb-chalk.js?v=4",
-      "./blackboard/js/bb-levels.js", "./blackboard/js/bb-levels.js?v=4",
-      "./blackboard/js/bb-app.js", "./blackboard/js/bb-app.js?v=4",
+      "./blackboard/css/blackboard.css", "./blackboard/css/blackboard.css?v=5",
+      "./blackboard/lib/handwrite.js", "./blackboard/lib/handwrite.js?v=5",
+      "./blackboard/js/bb-core.js", "./blackboard/js/bb-core.js?v=5",
+      "./blackboard/js/bb-div.js", "./blackboard/js/bb-div.js?v=5",
+      "./blackboard/js/bb-chalk.js", "./blackboard/js/bb-chalk.js?v=5",
+      "./blackboard/js/bb-levels.js", "./blackboard/js/bb-levels.js?v=5",
+      "./blackboard/js/bb-levels-div.js", "./blackboard/js/bb-levels-div.js?v=5",
+      "./blackboard/js/bb-topics.js", "./blackboard/js/bb-topics.js?v=5",
+      "./blackboard/js/bb-app.js", "./blackboard/js/bb-app.js?v=5",
       "./manifest.webmanifest", "./icons/math-mystery.svg"
     ]
   };

@@ -405,6 +405,42 @@
   }
 
   /* ------------------------------------------------------------------ *
+   *  4.5 复合板书的展开器注册表
+   *  ------------------------------------------------------------------
+   *  「竖式乘法」「点小数点」在这里登记；小数除法的竖式（vdiv）在 bb-div.js
+   *  里用 registerExpander 挂进来 —— 这样 bb-core 不必知道除法长什么样，
+   *  加新专题时也不用回来改这个文件。
+   *
+   *  约定：展开器接收 spec，返回 { ops: [...] }，每个 op 带 tag。
+   * ------------------------------------------------------------------ */
+  const EXPANDERS = {};
+
+  function registerExpander(kind, fn) {
+    if (!kind || typeof fn !== "function") return false;
+    EXPANDERS[kind] = fn;
+    return true;
+  }
+
+  /** 是不是「复合板书」（由展开器摊成一串原子笔画） */
+  function isCompound(kind) {
+    return !!EXPANDERS[kind];
+  }
+
+  function expanderKinds() {
+    return Object.keys(EXPANDERS);
+  }
+
+  /** 把任意一个 board op 摊平成原子笔画；普通笔画原样返回 */
+  function expandOp(op) {
+    const fn = EXPANDERS[op && op.k];
+    if (!fn) return [op];
+    return fn(op.spec || op).ops;
+  }
+
+  registerExpander("vcalc", expandVcalc);
+  registerExpander("pointjump", expandPointJump);
+
+  /* ------------------------------------------------------------------ *
    *  5. 答案判定
    * ------------------------------------------------------------------ */
 
@@ -427,7 +463,11 @@
   }
 
   function numbersIn(text) {
-    const m = normalize(text).match(/-?\d+(?:\.\d+)?/g);
+    /* 小孩可能只打「.15」：先补上前导 0，否则会被当成 15 判错 */
+    const s = normalize(text).replace(/(^|[^\d.])\.(\d)/g, function (all, pre, d) {
+      return pre + "0." + d;
+    });
+    const m = s.match(/-?\d+(?:\.\d+)?/g);
     return m || [];
   }
 
@@ -515,12 +555,11 @@
       if (!Array.isArray(step.ops) || !step.ops.length) bad.push(where + " 没有板书内容");
       (step.ops || []).forEach(function (op) {
         const at = where + "（" + (op.tag || op.k) + "）";
-        if (op.k === "vcalc" || op.k === "pointjump") {
-          const spec = op.spec || { a: op.a, b: op.b, rightX: op.rightX, y: op.y, size: op.size };
+        if (isCompound(op.k)) {
           try {
-            const e = op.k === "vcalc" ? expandVcalc(spec) : expandPointJump(spec);
-            if (!e.ops.length) bad.push(at + " 展开为空");
-            e.ops.forEach(function (o) { boundsOf(o, at, bad); });
+            const e = expandOp(op);
+            if (!e.length) bad.push(at + " 展开为空");
+            e.forEach(function (o) { boundsOf(o, at, bad); });
           } catch (err) {
             bad.push(at + " 参数错误：" + err.message);
           }
@@ -613,6 +652,10 @@
     advanceOf: advanceOf,
     expandVcalc: expandVcalc,
     expandPointJump: expandPointJump,
+    registerExpander: registerExpander,
+    isCompound: isCompound,
+    expandOp: expandOp,
+    expanderKinds: expanderKinds,
     rangeOf: rangeOf,
     setGlyphEngine: setGlyphEngine,
     engine: engine,

@@ -7,16 +7,17 @@
 <!-- 页面自己的报错记在这里，浏览器自检会读它（tools/browser-check.html） -->
 <script>window.__bbErrors=[];window.addEventListener("error",function(e){window.__bbErrors.push((e.message||"脚本报错")+" @"+String(e.filename||"").split("/").pop()+":"+(e.lineno||0));});window.addEventListener("unhandledrejection",function(e){window.__bbErrors.push("未处理的 Promise："+((e.reason&&e.reason.message)||e.reason));});</script>
 <meta name="description" content="先在黑板上看懂这一步，再做这一关的练习。">
-<link rel="stylesheet" href="./css/blackboard.css?v=4">
+<link rel="stylesheet" href="./css/blackboard.css?v=5">
 </head>
 <body class="bb">
 
 <header class="bb-head">
-  <a class="bb-back" href="./index.html">← 关卡地图</a>
+  <a class="bb-back" href="./index.html" id="backLink">← 关卡地图</a>
   <div class="bb-brand">
     <h1 id="lvTitle">加载中…</h1>
     <span class="bb-sub" id="lvUnit"></span>
   </div>
+  <nav class="bb-switch" id="topicSwitch" aria-label="切换专题"></nav>
   <span class="bb-chip" id="phaseTag">阶段一 · 讲解</span>
 </header>
 
@@ -77,15 +78,23 @@
   键盘：← → 翻讲解，空格下一步，R 重播
 </footer>
 
-<script src="./lib/handwrite.js?v=4"></script>
-<script src="./js/bb-core.js?v=4"></script>
-<script src="./js/bb-chalk.js?v=4"></script>
-<script src="./js/bb-levels.js?v=4"></script>
-<script src="./js/bb-app.js?v=4"></script>
+<script src="./lib/handwrite.js?v=5"></script>
+<script src="./js/bb-core.js?v=5"></script>
+<script src="./js/bb-div.js?v=5"></script>
+<script src="./js/bb-chalk.js?v=5"></script>
+<script src="./js/bb-levels.js?v=5"></script>
+<script src="./js/bb-levels-div.js?v=5"></script>
+<script src="./js/bb-topics.js?v=5"></script>
+<script src="./js/bb-app.js?v=5"></script>
 <script>
 (function () {
   "use strict";
   document.body.classList.toggle("reduce-motion", window.BBApp.prefersReducedMotion());
+  window.BBApp.renderTopicSwitch();
+  /* 返回地图时也带着专题，不然会跳回乘法 */
+  var back = document.getElementById("backLink");
+  var topic = window.BBTopics && window.BBTopics.current();
+  if (back && topic) back.setAttribute("href", "./index.html?topic=" + topic.id);
   window.BBApp.startLevel();
 })();
 </script>

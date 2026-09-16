@@ -170,7 +170,7 @@
    *   work —— 竖式、点小数点、划零这些「算式本体」，会一直留在板上
    *   text —— 左边的讲解文字，讲到下一步时就擦掉重写
    * 这正是老师在黑板上的做法：例题留着，讲解写完就擦。 */
-  const WORK_KINDS = { vcalc: 1, pointjump: 1 };
+  function isWorkKind(kind) { return BB.isCompound(kind); }
 
   Chalk.Board.prototype.load = function (steps) {
     const self = this;
@@ -178,10 +178,8 @@
     this.steps = (steps || []).map(function (step) {
       const flat = [];
       (step.ops || []).forEach(function (op) {
-        const work = !!WORK_KINDS[op.k];
-        const inner = work
-          ? (op.k === "vcalc" ? BB.expandVcalc(op.spec).ops : BB.expandPointJump(op.spec).ops)
-          : [op];
+        const work = isWorkKind(op.k);
+        const inner = work ? BB.expandOp(op) : [op];
         inner.forEach(function (o) {
           o.zone = work ? "work" : "text";
           flat.push(o);
@@ -398,13 +396,17 @@
   }
 
   function buildLine(ctx, op) {
+    /* 给 y1 / y2 就画任意方向的线（除法的除号框竖线要用），
+       只给 y 就是原来的横线 —— 老板书不受影响。 */
+    const y1 = op.y1 == null ? op.y : op.y1;
+    const y2 = op.y2 == null ? op.y : op.y2;
     const node = el("line", {
-      x1: op.x1, y1: op.y, x2: op.x2, y2: op.y,
+      x1: op.x1, y1: y1, x2: op.x2, y2: y2,
       stroke: ctx.tone, "stroke-width": op.weight || 3.2, "stroke-linecap": "round",
     });
     ctx.group.appendChild(node);
     ctx.units.push({ kind: "stroke", node: node, start: ctx.start, dur: BEAT.lineDur, needsLength: true });
-    ctx.baseline = op.y;
+    ctx.baseline = y2;
   }
 
   function buildRect(ctx, op) {
@@ -744,9 +746,7 @@
     let t = 0;
     const built = [];
     (ops || []).forEach(function (op) {
-      let list = [op];
-      if (op.k === "vcalc") list = BB.expandVcalc(op.spec).ops;
-      if (op.k === "pointjump") list = BB.expandPointJump(op.spec).ops;
+      const list = BB.isCompound(op.k) ? BB.expandOp(op) : [op];
       list.forEach(function (o) {
         const b = Chalk.buildOp(o, t, self.defs);
         t = b.end + BEAT.opGap;
