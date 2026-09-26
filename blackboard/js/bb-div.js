@@ -176,14 +176,25 @@
     const size = s.size || 46;
     const rowH = size * (1 + (s.rowGap == null ? 0.34 : s.rowGap));
     const scale = size / BB.GLYPH_BOX;
-    const colW = BB.advanceOf("0") * scale;
+    /* 列宽比一个数字的实际宽度再放开一档（课本的竖式就是这么排的）。
+       为什么非放不可：小数点是**骑在两列之间**的，数字之间的空当就是它的位置。
+       按字宽紧排时那个空当只有 9px 左右，塞进一颗 5px 的点之后，
+       两边各剩不到 1px —— 纸面上差不多就是贴着隔壁数字，粉笔笔迹再抖一下就糊成一片。
+       放开到 1.15 倍（空当约 13px），点两边各留 4px，才分得开。
+       注意必须是**均匀**放开：被除数、商、乘积、落位全按同一套列坐标摆，
+       一改就是一起改，列对齐关系不受影响。 */
+    const COL_FACTOR = 1.15;
+    const colW = BB.advanceOf("0") * scale * COL_FACTOR;
     const rightX = s.rightX == null ? 880 : s.rightX;
     const topY = s.y == null ? 92 : s.y;
     const cols = m.seq.length;
     const x0 = rightX - cols * colW;               /* 被除数第 1 列的左边 */
     const dividendY = topY + rowH;
     const leftEdge = x0 + (m.firstCol - 1) * colW; /* 被除数真正要写出来的第一位 */
-    const bx = leftEdge - size * 0.62;             /* 除号框竖线的 x */
+    /* 除号框竖线的 x：紧挨着被除数那一列。
+       人教版的写法是「3⌐96」——竖线右边就是被除数，中间只留一丁点空。
+       原来留了 0.62 个字宽，看上去被除数是「飘」在框右边的。 */
+    const bx = leftEdge - size * 0.14;
     const ruleY = dividendY - size * RULE_DROP;    /* 除号框横线的 y */
 
     const cellLeft = function (col) { return x0 + (col - 1) * colW; };
@@ -191,7 +202,10 @@
       const w = BB.advanceOf(ch) * scale;
       return { ch: ch, x: cellLeft(col) + colW / 2 - w / 2, w: w };
     }
-    /* 小数点画在「第 col 列之前」，也就是上一列和这一列的交界线上 */
+    /* 小数点画在「第 col 列之前」，也就是上一列和这一列的交界线上 ——
+       商的小数点「与被除数对齐」，靠的就是两边都骑在同一条分界线上。
+       按字框居中即可：「.」的墨迹在字形表里已经挪到字宽正中了
+       （见 handwrite.js 里那颗点的注释），所以字框中心就是墨迹中心。 */
     function pointCell(col) {
       const w = BB.advanceOf(".") * scale;
       return { ch: ".", x: cellLeft(col) - w * 0.5, w: w };

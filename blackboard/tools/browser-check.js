@@ -24,7 +24,9 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const http = require("http");
-const { spawn, spawnSync } = require("child_process");
+/* 这个脚本里一律不许用阻塞式的 spawnSync —— 三处都踩过（见下面各处的说明）。
+   taskkill / 抓图 / 抓 DOM 全部走异步 spawn。 */
+const { spawn } = require("child_process");
 
 const ROOT = path.join(__dirname, "..");
 const SHOT = process.argv.indexOf("--no-shot") < 0;
@@ -106,10 +108,15 @@ function flags(extra, profile) {
   ].concat(extra || []);
 }
 
+/* 收掉浏览器进程树。
+ * ⚠ 这里必须是**异步 spawn**，不能用 spawnSync —— 本机实测 taskkill 偶尔会
+ * 卡住不返回，而 spawnSync 一卡，事件循环就死了：脚本停在最后一行进度上，
+ * 既不报错也不结束，看起来就是「跑着跑着没影了」。
+ * 杀进程树本来就是尽力而为，不需要等它。 */
 function killTree(child) {
   if (!child || child.killed) return;
   try {
-    if (IS_WIN) spawnSync("taskkill", ["/T", "/F", "/PID", String(child.pid)], { stdio: "ignore" });
+    if (IS_WIN) spawn("taskkill", ["/T", "/F", "/PID", String(child.pid)], { stdio: "ignore", windowsHide: true });
     else process.kill(-child.pid, "SIGKILL");
   } catch (e) { /* 进程已经没了 */ }
   try { child.kill("SIGKILL"); } catch (e) { /* 同上 */ }
@@ -292,6 +299,11 @@ process.on("unhandledRejection", (e) => {
     if (rep.align) {
       log("比了 " + rep.align.pairs + " 处「商/乘积—列」，对错位的 " + rep.align.bad +
         " 处；声明要写的 " + rep.align.fill + " 笔里缺了 " + rep.align.missing + " 笔");
+    }
+    if (rep.ink) {
+      log("量了 " + rep.ink.cells + " 个字形，互相叠压的 " + rep.ink.overlaps + " 对；" +
+        rep.ink.dots + " 个小数点最紧处净留白 " +
+        (rep.ink.dotGap == null ? "n/a" : rep.ink.dotGap + "px"));
     }
     log((rep.ok ? "✅ " : "❌ ") + "通过 " + rep.pass + " 项，失败 " +
       ((rep.fails || []).length + (rep.errors || []).length) + " 项");

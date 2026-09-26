@@ -7,6 +7,8 @@
     "test": "node --test tests/*.test.js",
     "check:blackboard": "node blackboard/tools/site-check.js && node blackboard/tools/math-check.js",
     "check:blackboard:browser": "node blackboard/tools/browser-check.js",
-    "check:all": "npm test && npm run check:blackboard"
+    "check:peiyou": "node peiyou/tools/py-check.js",
+    "check:peiyou:browser": "node peiyou/tools/py-browser-check.js",
+    "check:all": "npm test && npm run check:blackboard && npm run check:peiyou"
   }
 }

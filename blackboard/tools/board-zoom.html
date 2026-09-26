@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>板书放大</title>
+<link rel="stylesheet" href="../css/blackboard.css">
+<style>
+  html, body { margin: 0; padding: 0; overflow: hidden; background: #0b1f19; }
+  #host { width: 100vw; height: 100vh; position: relative; }
+  #host .bb-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+</style>
+</head>
+<body class="bb">
+<div id="host"></div>
+
+<script src="../lib/handwrite.js"></script>
+<script src="../js/bb-core.js"></script>
+<script src="../js/bb-div.js"></script>
+<script src="../js/bb-chalk.js"></script>
+<script src="../js/bb-levels.js"></script>
+<script src="../js/bb-levels-div.js"></script>
+
+<script>
+/* 把某一关某一步的板书，按 viewBox 裁一块出来铺满整个窗口，
+   用来 1:1（或更大）核对字形、小数点、列对齐这些细节。
+   参数（都可省略）：
+     topic=div|mul  no=关卡号  step=第几步  vb=x,y,w,h（板面坐标，裁切区域）
+   不传 vb 就是整块黑板。 */
+(function () {
+  "use strict";
+  function q(name) {
+    var m = new RegExp("[?&]" + name + "=([^&#]*)").exec(location.search);
+    return m ? decodeURIComponent(m[1].replace(/\+/g, " ")) : null;
+  }
+
+  var topic = q("topic") === "div" ? window.BBLevelsDiv : window.BBLevels;
+  var no = Number(q("no") || 1);
+  var step = Number(q("step") || 1);
+  var level = topic.LEVELS[no - 1];
+  var host = document.getElementById("host");
+
+  var board = new window.Chalk.Board(host, { reduceMotion: true });
+  board.load(level.steps);
+  board.goto(Math.min(step, level.steps.length) - 1, { instant: true });
+
+  var vb = q("vb");
+  if (vb) board.svg.setAttribute("viewBox", vb.split(/[,\s]+/).join(" "));
+  /* 裁切时别让「居中留白」吃掉画面：meet 已经按比例铺满，这里只兜底 */
+  document.title = "READY";
+})();
+</script>
+</body>
+</html>

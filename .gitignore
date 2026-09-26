@@ -10,3 +10,5 @@ node_modules/
 .workbuddy/
 .qa/
 decimal-lab/
+# 培优拓展营：独立仓库 dlinjiade-debug/peiyou，本地目录不进主仓库
+peiyou/

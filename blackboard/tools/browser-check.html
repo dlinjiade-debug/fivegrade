@@ -7,10 +7,14 @@
 <style>
   #boardHost { width: 1280px; height: 720px; position: relative; }
   .bb-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  /* 第二块板：只用来量「整块板书」的笔迹，挪到画面外但照样参与布局
+     （不能 display:none，那样 getBBox 量不到东西）。 */
+  #boardHost2 { width: 1280px; height: 720px; position: absolute; left: -40000px; top: 0; }
 </style>
 </head>
 <body class="bb">
 <div id="boardHost"></div>
+<div id="boardHost2"></div>
 <pre id="bb-check-out" style="white-space:pre-wrap;font:13px/1.6 monospace;color:#eee;padding:16px">running…</pre>
 
 <script src="../lib/handwrite.js"></script>
@@ -434,6 +438,125 @@
   check("除法的商与乘积都压在对应的那一列上（比了 " + alignPairs + " 处）",
     alignBad.length === 0, alignBad.slice(0, 6).join(" | "));
 
+  /* ---------- 6.5 笔迹之间不许叠在一起 ----------
+     字形表里每个字的墨迹在自己的字框里并不是居中的（「.」就偏右，
+     墨迹落在字宽的 76%~111% 那一段）。位置算错，它就糊到隔壁数字身上 ——
+     这种错只有把板子放大才看得出来，但它确实是「学生抄下来就抄错」的。
+     所以这里把整块板书摊开（用第二块板，别动上面那块），逐对量墨迹框。
+     注意 getBBox() 不含描边粗细，得自己补上半个笔宽，否则「刚好挨着」
+     看着没事、其实笔画已经叠了。 */
+  var NUM_PAD = NUM_STROKE / 2;
+  var overlapBad = [];
+  var overlapPairs = 0;
+  var overlapCells = 0;
+  var overlapWorst = "";
+  var worstArea = 0;
+  var dotCount = 0;
+  var minDotGap = Infinity;   /* 墨迹框（含半个笔宽）之间的最小间隙 */
+  var board2 = new Chalk.Board(document.getElementById("boardHost2"), { reduceMotion: true });
+
+  function inkCells(node) {
+    var out = [];
+    for (var i = 0; i < node.children.length; i += 1) {
+      var kid = node.children[i];
+      var tr = kid.getAttribute ? (kid.getAttribute("transform") || "") : "";
+      var m = /translate\(\s*([-\d.]+)[\s,]+([-\d.]+)\s*\)\s*scale\(\s*([-\d.]+)\s*\)/.exec(tr);
+      if (!m) continue;
+      var bb;
+      try { bb = kid.getBBox(); } catch (e) { continue; }
+      if (!bb || (bb.width === 0 && bb.height === 0)) continue;
+      var ox = parseFloat(m[1]), oy = parseFloat(m[2]), s = parseFloat(m[3]);
+      out.push({
+        x1: ox + bb.x * s - NUM_PAD, y1: oy + bb.y * s - NUM_PAD,
+        x2: ox + (bb.x + bb.width) * s + NUM_PAD, y2: oy + (bb.y + bb.height) * s + NUM_PAD,
+      });
+    }
+    return out;
+  }
+
+  if (DivPack) {
+    DivPack.levels.LEVELS.forEach(function (lv) {
+      lv.steps.forEach(function (step, si) {
+        (step.ops || []).filter(function (o) { return o.k === "vdiv"; }).forEach(function (op) {
+          var wholeSpec = {};
+          Object.keys(op.spec || {}).forEach(function (k) { if (k !== "only") wholeSpec[k] = op.spec[k]; });
+          var whole;
+          try { whole = BB.expandVdiv(wholeSpec); } catch (e) { return; }
+          board2.load([{ ops: whole.ops }]);
+          board2.goto(0, { instant: true });
+          var cells = [];
+          board2.steps[0].ops.forEach(function (b) {
+            if (!b.node.classList || !b.node.classList.contains("bb-op-num")) return;
+            /* 每个字形是什么字，看原始 op 的 layout（data-text 对带小数点的
+               「9.6」是三个字形对两个字符，取不对） */
+            var src = b.op || {};
+            var t = src.layout && src.layout.length
+              ? src.layout.map(function (c) { return c.ch; }).join("")
+              : (b.node.getAttribute("data-text") || "");
+            inkCells(b.node).forEach(function (c, i) {
+              c.tag = b.node.getAttribute("data-tag") || "?";
+              c.ch = t.charAt(i) || "?";
+              cells.push(c);
+            });
+          });
+          overlapCells += cells.length;
+
+          /* 小数点单独再量一次「离两边数字的净留白」。
+             点本身就小（墨迹才 5px），挨上一点肉眼就是糊成一团；
+             而粉笔滤镜还要抖 ±1.5px，所以净留白至少要 2px 才算分得开。 */
+          cells.filter(function (c) { return c.ch === "."; }).forEach(function (dot) {
+            var left = null, right = null;
+            cells.forEach(function (o) {
+              if (o === dot) return;
+              if (Math.min(o.y2, dot.y2) - Math.max(o.y1, dot.y1) <= 0) return;  /* 不在同一行 */
+              if (o.x2 <= dot.x1 && (!left || o.x2 > left.x2)) left = o;
+              if (o.x1 >= dot.x2 && (!right || o.x1 < right.x1)) right = o;
+            });
+            dotCount += 1;
+            if (left) minDotGap = Math.min(minDotGap, dot.x1 - left.x2);
+            if (right) minDotGap = Math.min(minDotGap, right.x1 - dot.x2);
+          });
+          for (var i = 0; i < cells.length; i += 1) {
+            for (var j = i + 1; j < cells.length; j += 1) {
+              var ow = Math.min(cells[i].x2, cells[j].x2) - Math.max(cells[i].x1, cells[j].x1);
+              var oh = Math.min(cells[i].y2, cells[j].y2) - Math.max(cells[i].y1, cells[j].y1);
+              if (ow <= 0 || oh <= 0) continue;
+              overlapPairs += 1;
+              var area = ow * oh;
+              var pair = "「" + cells[i].tag + "」的「" + cells[i].ch + "」x" +
+                cells[i].x1.toFixed(1) + "~" + cells[i].x2.toFixed(1) + " 与 「" +
+                cells[j].tag + "」的「" + cells[j].ch + "」x" +
+                cells[j].x1.toFixed(1) + "~" + cells[j].x2.toFixed(1) +
+                "（叠 " + ow.toFixed(1) + "×" + oh.toFixed(1) + "px）";
+              if (area > worstArea) {
+                worstArea = area;
+                overlapWorst = lv.id + " 第" + (si + 1) + "步 " + pair;
+              }
+              /* 判定口径：两边的墨迹框都已经补过半个笔宽，
+                 所以「重叠 4.6px」= 真实墨迹刚好挨上。数字挨得近是正常的
+                 （小数点本来就贴着两边的数字），挨上才算错。 */
+              if (ow >= NUM_STROKE && oh >= NUM_STROKE) {
+                overlapBad.push(lv.id + " 第" + (si + 1) + "步 " + pair);
+              }
+            }
+          }
+        });
+      });
+    });
+  }
+
+  check("板书上没有任何两笔叠在一起（比了 " + overlapPairs + " 对，最重的一对： " +
+    (overlapWorst || "无") + "）",
+    overlapBad.length === 0, overlapBad.slice(0, 6).join(" | "));
+  check("笔迹叠压这条门禁真的量到了字形（" + overlapCells + " 个），不是空转",
+    overlapCells >= 100, "只量到 " + overlapCells + " 个字形的墨迹");
+  var dotGapNet = minDotGap === Infinity ? null : minDotGap + NUM_STROKE;  /* 去掉补的半笔宽，还原本来的留白 */
+  check("小数点离两边数字分得开（" + dotCount + " 个点，最紧处净留白 " +
+    (dotGapNet == null ? "n/a" : dotGapNet.toFixed(1) + "px") + "）",
+    dotCount > 0 && dotGapNet != null && dotGapNet >= 2,
+    "净留白只有 " + (dotGapNet == null ? "n/a" : dotGapNet.toFixed(1)) +
+      "px，粉笔笔迹抖一下就连成一片了");
+
   /* ---------- 7. 答案判定：正确答案要判对，错的要判错 ---------- */
   function correctInput(q) {
     if (q.type === "choice") return { choice: q.answer };
@@ -601,7 +724,9 @@
       steps: totalSteps,
       questions: qCount,
       rules: ruleMetrics,
-      align: { pairs: alignPairs, bad: alignBad.length, fill: fillPairs, missing: fillBad.length }
+      align: { pairs: alignPairs, bad: alignBad.length, fill: fillPairs, missing: fillBad.length },
+      ink: { cells: overlapCells, overlaps: overlapPairs, worst: overlapWorst,
+        dots: dotCount, dotGap: dotGapNet == null ? null : +dotGapNet.toFixed(1) }
     };
     /* marker 在这里才拼出来：源码里不出现完整的 marker 字面量，
        否则 --dump-dom 会把脚本源码当成结果捞走。 */

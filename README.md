@@ -18,12 +18,19 @@ python -m http.server 4187 --bind 127.0.0.1
 
 打开 `http://127.0.0.1:4187/index.html` 即可使用。
 
+进阶练习生成器本地入口：`http://127.0.0.1:4187/exercise-generator/`。
+
 ## 子站
 
 | 路径 | 内容 | 说明 |
 |---|---|---|
 | `decimal-lab/` | 小数点实验室 | 小数乘法 / 小数除法 / 简易方程，含 3D 场景 |
 | `blackboard/` | 粉笔小闯关 | 黑板板书风格的八关小闯关，**两个专题**：第 1 单元 小数乘法 + 第 3 单元 小数除法 |
+| `exercise-generator/` | 进阶练习生成器 | 小数乘法、小数除法、简易方程三单元，参数化题库、逐笔板书与知识点说明 |
+
+### 进阶练习生成器（`exercise-generator/`）
+
+独立静态模块，采用单元模块、参数化题型目录、知识点资料和生成核心分层。三个单元有 11、8、11 类提高题型，每轮分别生成 33、24、33 题；教师模式逐笔演示竖式或解方程，学生模式可先提交答案。小数乘法的重复条目已合并。内容审查与修订见 [`exercise-generator/docs/curriculum-outline.md`](exercise-generator/docs/curriculum-outline.md)。
 
 ### 粉笔小闯关（`blackboard/`）
 

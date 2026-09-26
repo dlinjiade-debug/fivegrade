@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#3e2818">
+  <title>五年级数学 · 进阶练习生成器</title>
+  <meta name="description" content="小数乘法、小数除法与简易方程的进阶练习，逐笔板书演示。">
+  <link rel="stylesheet" href="./css/generator.css?v=24">
+</head>
+<body>
+  <header class="wood-header">
+    <a class="brand" href="../index.html" aria-label="返回数学解谜局">
+      <span class="menu-mark" aria-hidden="true">☰</span>
+      <span class="brand-divider" aria-hidden="true"></span>
+      <span>五年级数学 · 进阶练习</span>
+    </a>
+    <div class="mode-switch" role="group" aria-label="练习模式">
+      <button class="mode-button is-active" type="button" data-mode="teacher" aria-pressed="true">♙ 教师模式</button>
+      <button class="mode-button" type="button" data-mode="student" aria-pressed="false">♙ 学生模式</button>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <aside class="unit-rail" aria-label="练习单元">
+      <div class="rail-heading">
+        <p>本期单元</p>
+        <small>三单元 · 逐步演示</small>
+      </div>
+      <nav id="unitNav" class="unit-nav">
+        <button class="unit-tab is-active" type="button" data-unit="decimal-multiplication">
+          <span class="unit-index">01</span>
+          <span><b>小数乘法</b><small>逐步板书</small></span>
+        </button>
+        <button class="unit-tab" type="button" data-unit="decimal-division">
+          <span class="unit-index">02</span>
+          <span><b>小数除法</b><small>逐步板书</small></span>
+        </button>
+        <button class="unit-tab" type="button" data-unit="simple-equations">
+          <span class="unit-index">03</span>
+          <span><b>简易方程</b><small>逐步板书</small></span>
+        </button>
+      </nav>
+      <div class="rail-note">
+        <span aria-hidden="true">✎</span>
+        <p>一道题，一步笔画。先想，再看板书。</p>
+      </div>
+      <a class="back-link" href="../index.html">← 返回数学工作台</a>
+    </aside>
+
+    <section class="lesson-area" aria-labelledby="unitTitle">
+      <div class="lesson-meta">
+        <span id="questionCounter">第 1 题 · 提高变式</span>
+        <span id="bankCounter">从 8 类题型中抽取</span>
+      </div>
+
+      <div class="wood-frame">
+        <div class="blackboard">
+          <div class="board-left">
+            <h1 id="unitTitle">小数乘法</h1>
+            <p class="unit-description" id="unitDescription"></p>
+            <div class="chalk-rule" aria-hidden="true"></div>
+            <p class="problem-label" id="problemLabel">提高变式 · 多位小数竖式</p>
+            <div class="question-text" id="questionText" aria-live="polite"></div>
+
+            <div class="student-answer" id="studentAnswer" hidden>
+              <label for="answerInput">你的答案</label>
+              <div class="answer-entry">
+                <input id="answerInput" autocomplete="off" inputmode="decimal" placeholder="在这里写答案" aria-describedby="answerFeedback">
+                <button id="submitAnswer" class="submit-button" type="button">提交答案</button>
+              </div>
+              <p id="answerFeedback" class="answer-feedback" role="status" aria-live="polite"></p>
+            </div>
+          </div>
+
+          <aside class="knowledge-note" aria-labelledby="knowledgeHeading">
+            <h2 id="knowledgeHeading"><span aria-hidden="true">☆</span> 本题知识点</h2>
+            <div class="yellow-rule" aria-hidden="true"></div>
+            <h3 id="pointTitle"></h3>
+            <p id="pointDescription" class="sr-only"></p>
+            <div class="note-tip">
+              <span class="chalk-underline" id="pointStrategy"></span>
+            </div>
+          </aside>
+          <div class="board-stage" id="boardStage" hidden>
+            <div class="stage-heading"><strong id="stageTitle"></strong><span id="stagePoint"></span></div>
+            <div class="chalk-canvas" id="chalkCanvas"></div>
+            <div class="stage-bottom"><span id="boardCaption"></span><span id="boardProgress"></span></div>
+          </div>
+        </div>
+        <div class="chalk-tray" aria-hidden="true">
+          <span class="chalk-stick"></span><span class="chalk-stick yellow"></span><span class="eraser"></span>
+        </div>
+      </div>
+
+      <div class="control-bar" role="group" aria-label="题目操作">
+        <button class="tool-button" id="previousQuestion" type="button">← 上一题</button>
+        <button class="tool-button" id="hintToggle" type="button" aria-pressed="true">擦掉提示</button>
+        <button class="tool-button" id="newQuestion" type="button">↻ 换例题</button>
+        <button class="tool-button continue-button" id="continueBoard" type="button">✎ 继续板书</button>
+      </div>
+      <details class="analysis-details" id="analysisDetails" hidden>
+        <summary>查看文字解析与易错提醒</summary>
+        <section class="answer-analysis" id="answerAnalysis" aria-labelledby="analysisTitle">
+          <div class="analysis-heading">
+            <h2 id="analysisTitle">答案解析</h2>
+            <p>答案：<b id="answerText"></b></p>
+          </div>
+          <ol id="analysisSteps"></ol>
+          <p class="common-error"><b>易错提醒：</b><span id="commonError"></span></p>
+        </section>
+      </details>
+      <p class="page-foot">单元模块 · 题库数据 · 逐笔板书 · 知识点</p>
+    </section>
+  </main>
+
+  <script src="./data/question-bank.js?v=24"></script>
+  <script src="./data/knowledge-points.js?v=24"></script>
+  <script src="./units/decimal-multiplication.js?v=24"></script>
+  <script src="./units/decimal-division.js?v=24"></script>
+  <script src="./units/simple-equations.js?v=24"></script>
+  <script src="./js/generator-core.js?v=24"></script>
+  <script src="../blackboard/lib/handwrite.js?v=5"></script>
+  <script src="../blackboard/js/bb-core.js?v=5"></script>
+  <script src="../blackboard/js/bb-div.js?v=5"></script>
+  <script src="../blackboard/js/bb-chalk.js?v=5"></script>
+  <script src="./js/board-steps.js?v=24"></script>
+  <script src="./js/app.js?v=24"></script>
+  <script src="./js/pwa-registration.js?v=24"></script>
+</body>
+</html>
