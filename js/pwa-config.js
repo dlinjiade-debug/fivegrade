@@ -4,7 +4,7 @@
   if (root) root.MathMysteryPWA = config;
 })(typeof self !== "undefined" ? self : globalThis, function () {
   return {
-    CACHE_NAME: "math-mystery-v24",
+    CACHE_NAME: "math-mystery-v25",
     PRECACHE_URLS: [
       "./index.html",
       "./unit1.html", "./unit2.html", "./unit3.html", "./unit4.html", "./unit5.html",
